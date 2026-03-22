@@ -969,9 +969,41 @@ The complete pipeline generates 5 output files in the directories specified in `
 ## Visualization
 All the visualization below are taken from the output of the code residing from `notebooks/01_data_exploration.ipynb`
 
+### 1. **Data Types**
+**Purpose**: Visualize the distribution of data types across the dataset
+
+**Visualization Output**:
+- Bar chart: Number of columns by data type (Numeric, Text/Object, Date/Time)
+
+**Output File**: `visualizations/Data_Types_Distribution.png`
+![Data_Types_Distribution.png](visualizations/Data_Types_Distribution.png)
+
 ---
 
-### 1. **Price plot**
+### 2. **Missing Values**
+**Purpose**: Visualize the percentage of missing values in each column
+
+**Visualization Output**:
+- Horizontal bar chart: Percentage of null values per column with color-coded severity (red >50%, orange 20-50%, blue <20%)
+
+**Output File**: `visualizations/Missing_Values_Percentage.png`
+![Missing_Values_Percentage.png](visualizations/Missing_Values_Percentage.png)
+
+---
+
+### 3. **ARBK Match Rate**
+**Purpose**: Visualize the match rate between buyer names and ARBK business registry
+
+**Visualization Output**:
+- Pie chart: Percentage of records successfully matched vs. unmatched to ARBK database
+
+**Output File**: `visualizations/ARBK_Match_Rate.png`
+![ARBK_Match_Rate.png](visualizations/ARBK_Match_Rate.png)
+
+---
+
+
+### 4. **Price plot**
 **Purpose**: Visualize the plot of Price
 
 **Visualization Output**:
@@ -980,7 +1012,7 @@ All the visualization below are taken from the output of the code residing from 
 **Output File**: `visualizations/Price_histogram_plot.png`
 ![Price_histogram_plot.png](visualizations/Price_histogram_plot.png)
 ---
-### 2. **Price plot logarithmic**
+### 5. **Price plot logarithmic**
 **Purpose**: Visualize the plot of Price
 
 **Visualization Output**:
@@ -989,7 +1021,7 @@ All the visualization below are taken from the output of the code residing from 
 **Output File**: `visualizations/Price_histogram_plot_log.png`
 ![Price_histogram_plot_log.png](visualizations/Price_histogram_plot_log.png)
 ---
-### 3. **land + built object in square meters histogram plot**
+### 6. **land + built object in square meters histogram plot**
 **Purpose**: Visualize the plot of land + built object in square meters
 
 **Visualization Output**:
@@ -998,7 +1030,7 @@ All the visualization below are taken from the output of the code residing from 
 **Output File**: `visualizations/land_and_object_histogram_plot.png`
 ![land_and_object_histogram_plot.png](visualizations/land_and_object_histogram_plot.png)
 ---
-### 4. **land + built object in square meters histogram plot logarithmic**
+### 7. **land + built object in square meters histogram plot logarithmic**
 **Purpose**: Visualize the plot of land + built object in square meters logarithm applied
 
 **Visualization Output**:
