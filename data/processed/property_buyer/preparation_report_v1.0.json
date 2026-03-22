@@ -1,0 +1,458 @@
+{
+  "pipeline_version": "v3.2",
+  "description": "Clean architecture ETL for property buyer classification",
+  "rows_initial": 3483,
+  "columns_initial": 47,
+  "rows_after_remove_null_business_type": 2687,
+  "rows_after_remove_null_target": 2687,
+  "duplicates_removed_full_row": 0,
+  "duplicates_removed_business_key": 0,
+  "area_inference": {
+    "rules": {
+      "land_only_object_area_to_zero": 586,
+      "object_only_land_area_to_zero": 678,
+      "object_area_group_fill_mixed_only": 6,
+      "land_area_group_fill_mixed_only": 5,
+      "mixed_asset_rows_detected": 349,
+      "remaining_object_area_filled_with_zero": 10,
+      "remaining_land_area_filled_with_zero": 269
+    }
+  },
+  "outlier_identification": {
+    "nr": {
+      "q1": 918.5,
+      "q3": 2539.5,
+      "iqr": 1621.0,
+      "lower": -1513.0,
+      "upper": 4971.0,
+      "outlier_count": 0,
+      "outlier_ratio": 0.0
+    },
+    "siperfaqja_e_objektit_nese_ka_objekt_te_toka_dhe_dihet_siperfaqja_m2": {
+      "q1": 0.0,
+      "q3": 112.06,
+      "iqr": 112.06,
+      "lower": 0.0,
+      "upper": 280.15,
+      "outlier_count": 463,
+      "outlier_ratio": 0.17231112765165613
+    },
+    "siperfaqja_e_tokes_ne_metra_katror": {
+      "q1": 0.0,
+      "q3": 13461.5,
+      "iqr": 13461.5,
+      "lower": 0.0,
+      "upper": 33653.75,
+      "outlier_count": 452,
+      "outlier_ratio": 0.16821734276144398
+    },
+    "cmimi_i_shitjes_se_asetit": {
+      "q1": 13525.0,
+      "q3": 146673.3,
+      "iqr": 133148.3,
+      "lower": 0.0,
+      "upper": 346395.75,
+      "outlier_count": 351,
+      "outlier_ratio": 0.1306289542240417
+    },
+    "arbk_numripunetoreve": {
+      "q1": 1.0,
+      "q3": 3.0,
+      "iqr": 2.0,
+      "lower": 0.0,
+      "upper": 6.0,
+      "outlier_count": 242,
+      "outlier_ratio": 0.09006326758466691
+    },
+    "arbk_kapitali": {
+      "q1": 0.0,
+      "q3": 10000.0,
+      "iqr": 10000.0,
+      "lower": 0.0,
+      "upper": 25000.0,
+      "outlier_count": 275,
+      "outlier_ratio": 0.10234462225530332
+    },
+    "arbk_pronari_1_kapitali": {
+      "q1": 0.0,
+      "q3": 100.0,
+      "iqr": 100.0,
+      "lower": 0.0,
+      "upper": 250.0,
+      "outlier_count": 638,
+      "outlier_ratio": 0.2374395236323037
+    },
+    "arbk_pronari_1_kapitaliperqindje": {
+      "q1": 0.0,
+      "q3": 50.0,
+      "iqr": 50.0,
+      "lower": 0.0,
+      "upper": 125.0,
+      "outlier_count": 7,
+      "outlier_ratio": 0.0026051358392259025
+    },
+    "arbk_aktiviteti_1_kodinace": {
+      "q1": 4399.0,
+      "q3": 4941.0,
+      "iqr": 542.0,
+      "lower": 3586.0,
+      "upper": 5754.0,
+      "outlier_count": 851,
+      "outlier_ratio": 0.31671008559732045
+    },
+    "arbk_aktiviteti_2_kodinace": {
+      "q1": 4329.0,
+      "q3": 4778.0,
+      "iqr": 449.0,
+      "lower": 3655.5,
+      "upper": 5451.5,
+      "outlier_count": 631,
+      "outlier_ratio": 0.23483438779307778
+    },
+    "arbk_aktiviteti_3_kodinace": {
+      "q1": 4339.0,
+      "q3": 4789.0,
+      "iqr": 450.0,
+      "lower": 3664.0,
+      "upper": 5464.0,
+      "outlier_count": 492,
+      "outlier_ratio": 0.18310383327130628
+    },
+    "arbk_aktiviteti_4_kodinace": {
+      "q1": 4332.75,
+      "q3": 4939.0,
+      "iqr": 606.25,
+      "lower": 3423.375,
+      "upper": 5848.375,
+      "outlier_count": 330,
+      "outlier_ratio": 0.12281354670636398
+    },
+    "arbk_aktiviteti_5_kodinace": {
+      "q1": 4331.0,
+      "q3": 4941.0,
+      "iqr": 610.0,
+      "lower": 3416.0,
+      "upper": 5856.0,
+      "outlier_count": 281,
+      "outlier_ratio": 0.10457759583178265
+    },
+    "total_area_m2": {
+      "q1": 58.0,
+      "q3": 14496.0,
+      "iqr": 14438.0,
+      "lower": 0.0,
+      "upper": 36153.0,
+      "outlier_count": 447,
+      "outlier_ratio": 0.1663565314477112
+    },
+    "price_per_total_m2": {
+      "q1": 1.5548739208925124,
+      "q3": 754.2857142857143,
+      "iqr": 752.7308403648218,
+      "lower": 0.0,
+      "upper": 1883.381974832947,
+      "outlier_count": 317,
+      "outlier_ratio": 0.11797543729065872
+    },
+    "price_per_land_m2": {
+      "q1": 0.0,
+      "q3": 20.523129060209243,
+      "iqr": 20.523129060209243,
+      "lower": 0.0,
+      "upper": 51.30782265052311,
+      "outlier_count": 498,
+      "outlier_ratio": 0.18533680684778564
+    },
+    "price_per_object_m2": {
+      "q1": 0.0,
+      "q3": 661.6199748327704,
+      "iqr": 661.6199748327704,
+      "lower": 0.0,
+      "upper": 1654.049937081926,
+      "outlier_count": 366,
+      "outlier_ratio": 0.13621138816524003
+    },
+    "log_sale_price": {
+      "q1": 9.51236733003998,
+      "q3": 11.895968907230827,
+      "iqr": 2.3836015771908468,
+      "lower": 5.93696496425371,
+      "upper": 15.471371273017098,
+      "outlier_count": 18,
+      "outlier_ratio": 0.006698920729438035
+    },
+    "area_price_interaction": {
+      "q1": 10560.0,
+      "q3": 146440.8,
+      "iqr": 135880.8,
+      "lower": 0.0,
+      "upper": 350262.0,
+      "outlier_count": 350,
+      "outlier_ratio": 0.13025679196129514
+    },
+    "contract_year": {
+      "q1": 2012.0,
+      "q3": 2019.0,
+      "iqr": 7.0,
+      "lower": 2001.5,
+      "upper": 2029.5,
+      "outlier_count": 1,
+      "outlier_ratio": 0.0003721622627465575
+    },
+    "contract_month": {
+      "q1": 1.0,
+      "q3": 8.0,
+      "iqr": 7.0,
+      "lower": -9.5,
+      "upper": 18.5,
+      "outlier_count": 0,
+      "outlier_ratio": 0.0
+    },
+    "business_age_days_at_sale": {
+      "q1": 504.0,
+      "q3": 4741.0,
+      "iqr": 4237.0,
+      "lower": 0.0,
+      "upper": 11096.5,
+      "outlier_count": 0,
+      "outlier_ratio": 0.0
+    },
+    "business_age_years_at_sale": {
+      "q1": 1.379876796714579,
+      "q3": 12.980150581793293,
+      "iqr": 11.600273785078713,
+      "lower": 0.0,
+      "upper": 30.380561259411362,
+      "outlier_count": 0,
+      "outlier_ratio": 0.0
+    },
+    "capital_to_sale_price_ratio": {
+      "q1": 0.0,
+      "q3": 0.005145797598627788,
+      "iqr": 0.005145797598627788,
+      "lower": 0.0,
+      "upper": 0.01286449399656947,
+      "outlier_count": 608,
+      "outlier_ratio": 0.22627465574990696
+    }
+  },
+  "leakage_columns_removed": [
+    "arbk_telefoni",
+    "arbk_email",
+    "arbk_webfaqja",
+    "arbk_emribiznesit_gjetur",
+    "arbk_matchfield",
+    "arbk_matchscore",
+    "arbk_datashuarjesbiznesit"
+  ],
+  "sparse_columns_removed": [],
+  "constant_columns_removed": [],
+  "dominant_low_information_columns_removed": [
+    {
+      "column": "arbk_aktiviteti_1_llojiaktivitetit",
+      "dominant_ratio": 0.9534797171566803,
+      "nunique": 2
+    },
+    {
+      "column": "cmimi_i_shitjes_se_asetit_is_outlier_iqr",
+      "dominant_ratio": 0.8693710457759584,
+      "nunique": 2
+    },
+    {
+      "column": "arbk_numripunetoreve_is_outlier_iqr",
+      "dominant_ratio": 0.9099367324153331,
+      "nunique": 2
+    },
+    {
+      "column": "arbk_kapitali_is_outlier_iqr",
+      "dominant_ratio": 0.8976553777446967,
+      "nunique": 2
+    },
+    {
+      "column": "arbk_pronari_1_kapitaliperqindje_is_outlier_iqr",
+      "dominant_ratio": 0.997394864160774,
+      "nunique": 2
+    },
+    {
+      "column": "arbk_aktiviteti_4_kodinace_is_outlier_iqr",
+      "dominant_ratio": 0.877186453293636,
+      "nunique": 2
+    },
+    {
+      "column": "arbk_aktiviteti_5_kodinace_is_outlier_iqr",
+      "dominant_ratio": 0.8954224041682174,
+      "nunique": 2
+    },
+    {
+      "column": "price_per_total_m2_is_outlier_iqr",
+      "dominant_ratio": 0.8820245627093413,
+      "nunique": 2
+    },
+    {
+      "column": "price_per_object_m2_is_outlier_iqr",
+      "dominant_ratio": 0.86378861183476,
+      "nunique": 2
+    },
+    {
+      "column": "log_sale_price_is_outlier_iqr",
+      "dominant_ratio": 0.993301079270562,
+      "nunique": 2
+    },
+    {
+      "column": "area_price_interaction_is_outlier_iqr",
+      "dominant_ratio": 0.8697432080387049,
+      "nunique": 2
+    },
+    {
+      "column": "contract_year_is_outlier_iqr",
+      "dominant_ratio": 0.9996278377372534,
+      "nunique": 2
+    }
+  ],
+  "identifier_columns_removed": [
+    "nr",
+    "pak_id",
+    "ndermarrja_shoqerore"
+  ],
+  "missing_value_treatment": {
+    "rule_based_fills": {
+      "arbk_pronari_1_kapitali": {
+        "strategy": "fill_zero",
+        "filled": 102
+      },
+      "arbk_pronari_1_kapitaliperqindje": {
+        "strategy": "fill_zero",
+        "filled": 96
+      },
+      "arbk_kapitali": {
+        "strategy": "fill_zero",
+        "filled": 1327
+      },
+      "arbk_aktiviteti_1_pershkrimi": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 125
+      },
+      "arbk_aktiviteti_2_pershkrimi": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 963
+      },
+      "arbk_aktiviteti_2_llojiaktivitetit": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 963
+      },
+      "arbk_aktiviteti_3_pershkrimi": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1281
+      },
+      "arbk_aktiviteti_3_llojiaktivitetit": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1281
+      },
+      "arbk_aktiviteti_4_pershkrimi": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1583
+      },
+      "arbk_aktiviteti_4_llojiaktivitetit": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1583
+      },
+      "arbk_aktiviteti_5_pershkrimi": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1801
+      },
+      "arbk_aktiviteti_5_llojiaktivitetit": {
+        "strategy": "fill_aktivitete_tjera",
+        "filled": 1801
+      },
+      "arbk_statusiarbk": {
+        "strategy": "fill_Status i panjohur",
+        "filled": 45
+      },
+      "qytet_apo_fshat_lokacioni_i_asetit_te_shitur": {
+        "strategy": "fill_Lokacion i panjohur",
+        "filled": 1
+      },
+      "zona_kadastrale": {
+        "strategy": "fill_Zone kadastrale e panjohur",
+        "filled": 1
+      },
+      "data_e_kontrates": {
+        "strategy": "fill_median_date",
+        "filled": 34,
+        "value": "2015-01-06 00:00:00"
+      }
+    },
+    "group_fills": {},
+    "fallback_fills": {
+      "arbk_numripunetoreve": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 8,
+        "value": 0
+      },
+      "arbk_pronari_1": {
+        "strategy": "mode_or_default_text",
+        "filled": 1,
+        "value": "Bashkim Shala"
+      },
+      "arbk_aktiviteti_1_kodinace": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 125,
+        "value": 0
+      },
+      "arbk_aktiviteti_2_kodinace": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 963,
+        "value": 0
+      },
+      "arbk_aktiviteti_3_kodinace": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 1281,
+        "value": 0
+      },
+      "arbk_aktiviteti_4_kodinace": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 1583,
+        "value": 0
+      },
+      "arbk_aktiviteti_5_kodinace": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 1801,
+        "value": 0
+      },
+      "contract_year": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 34,
+        "value": 0
+      },
+      "contract_month": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 34,
+        "value": 0
+      },
+      "contract_quarter": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 34,
+        "value": 0
+      },
+      "business_age_days_at_sale": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 34,
+        "value": 0
+      },
+      "business_age_years_at_sale": {
+        "strategy": "fill_zero_numeric_no_artificial_bias",
+        "filled": 34,
+        "value": 0
+      }
+    }
+  },
+  "remaining_missing_values_after_fill": 0,
+  "rows_removed_rare_targets": 0,
+  "buyers_remaining": 2253,
+  "raw_date_columns_removed": [
+    "data_e_kontrates",
+    "arbk_dataregjistrimit"
+  ],
+  "rows_final_after_all_transformations": 2687,
+  "columns_final_after_all_transformations": 70
+}

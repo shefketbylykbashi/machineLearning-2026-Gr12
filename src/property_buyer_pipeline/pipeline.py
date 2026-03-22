@@ -2,6 +2,7 @@
 ETL Pipeline Orchestration - Coordinates Extract, Transform, Load operations.
 """
 import warnings
+from sklearn.model_selection import train_test_split
 from .config import (
     INPUT_FILE, OUTPUT_DIR, MODELS_DIR, TARGET_COL, MANDATORY_BUSINESS_COL
 )
@@ -119,14 +120,31 @@ class ETLPipeline:
         return df
     
     def _load(self, df_prepared) -> None:
-        """Load phase - Save cleaned dataset and report."""
+        """Load phase - Save cleaned dataset, train/test split, and report."""
         print("\n[PHASE 3: LOAD]")
         print("-" * 70)
         
+        # Save cleaned dataset
         self.loader.save_cleaned_data(
             df_cleaned=df_prepared,
             report=self.report
         )
+        
+        # Train-test split (80-20)
+        df_train, df_test = train_test_split(
+            df_prepared,
+            test_size=0.2,
+            random_state=42
+        )
+        
+        # Save train and test datasets
+        self.loader.save_train_test_data(
+            df_train=df_train,
+            df_test=df_test
+        )
+        
+        self.report["train_size"] = int(len(df_train))
+        self.report["test_size"] = int(len(df_test))
 
 
 def main():

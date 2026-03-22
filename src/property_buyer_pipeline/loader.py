@@ -39,6 +39,24 @@ class DataLoader:
             json.dump(report, f, ensure_ascii=False, indent=2, default=str)
         print(f"✓ Saved: {path}")
     
+    def _save_train_data(self, df_train: pd.DataFrame) -> None:
+        """Save training dataset."""
+        path = self.output_dir / OUTPUT_FILES["train_dataset"]
+        df_train.to_excel(path, index=False)
+        print(f"✓ Saved: {path}")
+    
+    def _save_test_data(self, df_test: pd.DataFrame) -> None:
+        """Save test dataset."""
+        path = self.output_dir / OUTPUT_FILES["test_dataset"]
+        df_test.to_excel(path, index=False)
+        print(f"✓ Saved: {path}")
+    
+    def save_train_test_data(self, df_train: pd.DataFrame, df_test: pd.DataFrame) -> None:
+        """Save train and test datasets."""
+        self._save_train_data(df_train)
+        self._save_test_data(df_test)
+        self._print_save_summary()
+    
     @staticmethod
     def _print_save_summary() -> None:
         """Print summary of saved artifacts."""
