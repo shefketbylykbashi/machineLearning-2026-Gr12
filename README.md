@@ -1,16 +1,26 @@
-# Machine Learning - Project I: Potential Buyer Recommendation System
+<table border="0">
+ <tr>
+    <td><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/University_of_Prishtina_logo.svg/1200px-University_of_Prishtina_logo.svg.png" width="150" alt="University Logo" /></td>
+    <td>
+      <p>University of Pristina</p>
+      <p>Faculty of Electrical and Computer Engineering</p>
+      <p>Computer and Software Engineering - Master Program</p>
+	<p>Course: Machine Learning</p>
+      <p>Professor: Dr. Lule Ahmedi</p>
+      <p>Assistant: Dr. Sc. Mërgim Hoti</p>
+    </td>
+ </tr>
+</table>
+
+# Property Buyer Prediction
 
 ## Project Overview
 
-This project aims to build a machine learning system that recommends potential buyers for properties when they are put up for sale. The system combines real estate sales data from Kosovo's Agency for Privatization with business information from ARBK.
+This repository contains a **production-grade data engineering and machine learning pipeline** designed to predict the most likely buyer of asset sales using Random Forest classification. The project demonstrates advanced techniques in **data cleaning, domain logic application, feature engineering, and dataset preparation** for supervised learning tasks.
 
-## Objective
+The pipeline transforms a real-world, messy business dataset into a clean, feature-rich, ML-ready dataset through systematic application of domain knowledge, statistical methods, and data engineering best practices. The final output is a well-curated dataset with zero missing values, engineered features, and explicit handling of data quality issues.
 
-When a property is listed for sale, suggest potential buyers based on:
-- Sales data from the Agency of Privatization of Kosovo
-- Business profiles and information from ARBK
-- Data enrichment by linking business names with ARBK records
-
+---
 ## Data Sources
 
 1. **Agency of Privatization of Kosovo (PAK)**
@@ -21,97 +31,23 @@ When a property is listed for sale, suggest potential buyers based on:
    - Business information linked to buyer names
    - Enriches the dataset with additional business context
    - Website: https://arbk.rks-gov.net/
+---
 
-## Project Structure
+## Objective
 
-```
-├── README.md                                    # Project documentation
-├── requirements.txt                             # Python dependencies
-├── data/
-│   └── raw/
-│       └── sales_with_converted_rents_enriched_with_arbk.xlsx
-├── notebooks/
-│   └── 01_data_exploration.ipynb               # Data exploration and quality assessment
-└── scripts/
-    └── data_preparation/
-        ├── convert_rent_to_sales.py            # Data transformation script
-        └── enrich_with_arbk.py                 # ARBK enrichment script
-```
+### Problem Statement
+Asset sales in emerging markets often involve complex business relationships and occur through various transaction types. Understanding which buyer (e.g., individual, business entity, investor, etc.) is most likely to purchase a given asset based on its characteristics, location, and market conditions provides significant value for:
 
-## Current Status
+- **Market analysis** – identifying buyer patterns and market segmentation
+- **Pricing optimization** – understanding buyer-specific value drivers
+- **Risk assessment** – identifying unusual or high-risk transactions
+- **Business strategy** – targeting the right buyer segments for specific assets
 
-**Phase**: Data Planning & Exploration
-- Dataset collection
-- Initial data enrichment with ARBK
-- Data exploration and quality analysis
+### Target Variable
+The model predicts **bleresi** (buyer) – a categorical variable representing the buyer classification at the time of asset sale.
 
-
-### Installation
-
-1. **Clone or download the project**
-   ```bash
-   cd machineLearning-2026-Gr12
-   ```
-
-2. **Create and activate virtual environment**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\Activate.ps1
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Using the Project
-
-1. **Open Jupyter Notebooks**
-   - Open `notebooks/01_data_exploration.ipynb`
-   - Select the `.venv` as the Jupyter kernel
-
-3. **Explore the Data**
-   - Run the data exploration notebook to understand dataset characteristics:
-     - Data types and distributions
-     - Missing values (nulls)
-     - Data quality metrics (duplicates, ARBK match rate)
-     - Categorical cardinality analysis
-
-
-## Dependencies
-
-- **pandas**: Data manipulation and analysis
-- **numpy**: Numerical computing
-- **matplotlib**: Data visualization
-- **openpyxl**: Excel file handling
-
-See `requirements.txt` for complete list and versions.
-
-## Key Findings (so far)
-
-### Dataset Overview
-- **Total Records**: 3,483 property sales
-- **Total Features**: 47 columns (numeric, categorical, date/time)
-- **Data Types**: Mix of integers, floats, objects, and datetime columns
-
-### Data Quality
-**No Duplicate Rows**: 100% unique records (0 duplicates)
-
-### ARBK Matching Success
-The system successfully linked business names to ARBK records:
-- **Matched**: 2,687 records (77.1%)
-- **Not Matched**: 796 records (22.9%)
-
-**Matching Methods Used**:
-- Exact owner name match: 1,856 records
-- Fuzzy owner name match: 476 records
-- Exact business name match: 232 records
-- Fuzzy business name match: 123 records
-
-### Data Characteristics
-- **Missing Values**: Present in several columns (see notebook for detailed analysis)
-- **Categorical Cardinality**: Analyzed to identify low-cardinality columns (<= 20 unique values) suitable for feature engineering
-- **Visualizations**: Data types distribution, null values heatmap, ARBK match rate pie chart, cardinality bar charts
-
-*See `notebooks/01_data_exploration.ipynb` for complete tables, visualizations, and detailed analysis.*
-
+### Application Domain
+The dataset combines:
+- **Asset characteristics** – property type (land, building/object, mixed assets), location, area
+- **Transaction details** – sale price, contract date
+- **Business context** – buyer business registration information (ARBK – Albanian business registry data)
