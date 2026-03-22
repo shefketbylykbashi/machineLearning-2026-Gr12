@@ -1039,6 +1039,15 @@ All the visualization below are taken from the output of the code residing from 
 **Output File**: `visualizations/land_and_object_histogram_plot_log.png`
 ![land_and_object_histogram_plot_log.png](visualizations/land_and_object_histogram_plot_log.png)
 ---
+### 8. **outliers in sales price logarithmic**
+**Purpose**: Visualize the outliers of the price column logarithmized
+
+**Visualization Output**:
+- BoxPlot: the boxplot of the outliers of price col
+
+**Output File**: `visualizations/log_sale_price_outliers.png`
+![log_sale_price_outliers.png](visualizations/log_sale_price_outliers.png)
+---
 
 
 ### Visualization Scripts Summary Table
