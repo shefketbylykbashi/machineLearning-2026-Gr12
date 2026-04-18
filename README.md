@@ -1120,3 +1120,9 @@ Property Buyer Prediction Dataset & ETL Pipeline.
 Machine Learning Project (2026).
 Repository: https://github.com/yourusername/machineLearning-2026-Gr12
 ```
+
+---
+
+# Phase 2 : Analysis and Evaluation (Retraining)
+
+This section covers the model training techniques applied, results obtained, and detailed discussion of decisions made
