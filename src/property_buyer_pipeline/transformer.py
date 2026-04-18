@@ -4,7 +4,7 @@ Transform Layer - Data transformation and feature engineering.
 import numpy as np
 import pandas as pd
 from .config import (
-    TARGET_COL, MANDATORY_BUSINESS_COL, LEAKAGE_COLUMNS, NUMERIC_LIKE_COLUMNS,
+    TARGET_COL, PROFILE_COL, MANDATORY_BUSINESS_COL, LEAKAGE_COLUMNS, NUMERIC_LIKE_COLUMNS,
     DATE_COLUMNS, AREA_COLUMNS, PRICE_COLUMN, SPARSE_COL_THRESHOLD,
     DOMINANT_VALUE_THRESHOLD, PROTECTED_COLUMNS, CATEGORICAL_DEFAULTS,
     ZERO_FILL_COLUMNS, AREA_GROUP_MIN_SIZE, GENERIC_GROUP_MIN_SIZE, MIN_TARGET_FREQUENCY
@@ -403,6 +403,85 @@ class FeatureEngineer:
         return df
 
 
+class BuyerProfileEngineer:
+    """Creates the derived buyer profile used by downstream models."""
+
+    @staticmethod
+    def _normalize_text(value: object) -> str:
+        return str(value).strip().lower()
+
+    @classmethod
+    def _map_entity_group(cls, row: pd.Series) -> str:
+        business_type = cls._normalize_text(row.get("arbk_llojibiznesit", ""))
+        buyer_name = cls._normalize_text(row.get(TARGET_COL, ""))
+        if "biznes individual" in business_type:
+            return "individual"
+        if "aksionare" in business_type:
+            return "corporation"
+        if "ortak" in business_type:
+            return "partnership"
+        if "dega" in business_type:
+            return "branch"
+        if "pergjegjesi" in business_type or "përgjegjësi" in business_type:
+            return "llc"
+        if any(token in buyer_name for token in ["shpk", "sh.p.k", "l.l.c", "llc", "d.o.o", "sh.a"]):
+            return "company"
+        return "other"
+
+    @staticmethod
+    def _map_activity_group(activity_code: object) -> str:
+        if pd.isna(activity_code):
+            return "unknown"
+        code = int(activity_code)
+        if 1 <= code <= 399:
+            return "primary"
+        if 1000 <= code <= 3399:
+            return "manufacturing"
+        if 3500 <= code <= 3999:
+            return "utilities"
+        if 4100 <= code <= 4399:
+            return "construction"
+        if 4500 <= code <= 4799:
+            return "trade"
+        if 4900 <= code <= 5699:
+            return "transport_hospitality"
+        if 5800 <= code <= 6399:
+            return "information"
+        if 6400 <= code <= 8299:
+            return "finance_real_estate_admin"
+        if 8400 <= code <= 8899:
+            return "public_social"
+        if 9000 <= code <= 9999:
+            return "other_services"
+        return "unknown"
+
+    @staticmethod
+    def _map_macro_activity_group(activity_group: str) -> str:
+        if activity_group in {"manufacturing", "utilities", "construction"}:
+            return "industrial_ops"
+        if activity_group in {"trade", "transport_hospitality", "information", "finance_real_estate_admin", "other_services"}:
+            return "commercial_services"
+        if activity_group == "public_social":
+            return "public_social"
+        if activity_group == "primary":
+            return "primary"
+        return "unknown"
+
+    @classmethod
+    def add_buyer_profile(cls, df: pd.DataFrame, report: dict) -> pd.DataFrame:
+        """Append buyer_profile while keeping helper group columns internal."""
+        entity_group = df.apply(cls._map_entity_group, axis=1)
+        activity_group = df["arbk_aktiviteti_1_kodinace"].apply(cls._map_activity_group)
+        macro_activity_group = activity_group.apply(cls._map_macro_activity_group)
+        df[PROFILE_COL] = entity_group + "__" + macro_activity_group
+        report["buyer_profile_summary"] = {
+            "profiles_created": int(df[PROFILE_COL].nunique(dropna=True)),
+            "unknown_profile_rows": int(df[PROFILE_COL].astype(str).str.contains("unknown", na=False).sum()),
+        }
+        print("Buyer profile column created")
+        return df
+
+
 class ColumnCleaner:
     """Removes low-quality columns."""
     
@@ -423,7 +502,7 @@ class ColumnCleaner:
         missing_ratio = df.isna().mean()
         sparse_cols = [
             c for c in missing_ratio.index
-            if missing_ratio[c] > SPARSE_COL_THRESHOLD and c != TARGET_COL
+            if missing_ratio[c] > SPARSE_COL_THRESHOLD and c not in {TARGET_COL, PROFILE_COL}
         ]
         if sparse_cols:
             df = df.drop(columns=sparse_cols)
@@ -437,7 +516,7 @@ class ColumnCleaner:
         """Remove columns with only one unique value."""
         nunique = df.nunique(dropna=False)
         constant_cols = [
-            c for c in nunique.index if nunique[c] <= 1 and c != TARGET_COL
+            c for c in nunique.index if nunique[c] <= 1 and c not in {TARGET_COL, PROFILE_COL}
         ]
         if constant_cols:
             df = df.drop(columns=constant_cols, errors="ignore")

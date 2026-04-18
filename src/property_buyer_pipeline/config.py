@@ -28,6 +28,7 @@ MODELS_DIR = DATA_DIR / "models" / "property_buyer"
 # =========================================================
 TARGET_COL_RAW = "Blerësi"
 TARGET_COL = "bleresi"
+PROFILE_COL = "buyer_profile"
 MANDATORY_BUSINESS_COL = "arbk_nllojibiznesitid"
 
 # =========================================================
@@ -71,6 +72,7 @@ PRICE_COLUMN = "cmimi_i_shitjes_se_asetit"
 
 PROTECTED_COLUMNS = {
     TARGET_COL,
+    PROFILE_COL,
     MANDATORY_BUSINESS_COL,
     "cmimi_i_shitjes_se_asetit",
     "siperfaqja_e_objektit_nese_ka_objekt_te_toka_dhe_dihet_siperfaqja_m2",

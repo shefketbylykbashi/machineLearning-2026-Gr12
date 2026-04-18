@@ -446,6 +446,10 @@
       }
     }
   },
+  "buyer_profile_summary": {
+    "profiles_created": 16,
+    "unknown_profile_rows": 146
+  },
   "remaining_missing_values_after_fill": 0,
   "rows_removed_rare_targets": 0,
   "buyers_remaining": 2253,
@@ -454,5 +458,5 @@
     "arbk_dataregjistrimit"
   ],
   "rows_final_after_all_transformations": 2687,
-  "columns_final_after_all_transformations": 70
+  "columns_final_after_all_transformations": 71
 }

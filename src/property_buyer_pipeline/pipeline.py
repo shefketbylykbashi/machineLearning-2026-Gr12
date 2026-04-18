@@ -1,19 +1,35 @@
 """
 ETL Pipeline Orchestration - Coordinates Extract, Transform, Load operations.
 """
+from pathlib import Path
+import sys
 import warnings
 from sklearn.model_selection import train_test_split
-from .config import (
-    INPUT_FILE, OUTPUT_DIR, MODELS_DIR, TARGET_COL, MANDATORY_BUSINESS_COL
-)
-from .extractor import DataExtractor
-from .transformer import (
-    DataValidator, DuplicateHandler, TypeConverter, AreaInferencer,
-    MissingValueHandler, FeatureEngineer, ColumnCleaner, TargetFilter
-)
-from .loader import DataLoader
-from .utils import identify_outliers_iqr
 import numpy as np
+
+if __package__ in {None, ""}:
+    sys.path.append(str(Path(__file__).resolve().parents[1]))
+    from property_buyer_pipeline.config import (
+        INPUT_FILE, OUTPUT_DIR, MODELS_DIR, TARGET_COL, MANDATORY_BUSINESS_COL
+    )
+    from property_buyer_pipeline.extractor import DataExtractor
+    from property_buyer_pipeline.transformer import (
+        DataValidator, DuplicateHandler, TypeConverter, AreaInferencer,
+        MissingValueHandler, FeatureEngineer, BuyerProfileEngineer, ColumnCleaner, TargetFilter
+    )
+    from property_buyer_pipeline.loader import DataLoader
+    from property_buyer_pipeline.utils import identify_outliers_iqr
+else:
+    from .config import (
+        INPUT_FILE, OUTPUT_DIR, MODELS_DIR, TARGET_COL, MANDATORY_BUSINESS_COL
+    )
+    from .extractor import DataExtractor
+    from .transformer import (
+        DataValidator, DuplicateHandler, TypeConverter, AreaInferencer,
+        MissingValueHandler, FeatureEngineer, BuyerProfileEngineer, ColumnCleaner, TargetFilter
+    )
+    from .loader import DataLoader
+    from .utils import identify_outliers_iqr
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -100,7 +116,10 @@ class ETLPipeline:
         # Missing values
         df, fill_report = MissingValueHandler.fill_missing_values(df)
         self.report["missing_value_treatment"] = fill_report
-        
+
+        # Create the derived profile target once in the preprocessing pipeline.
+        df = BuyerProfileEngineer.add_buyer_profile(df, self.report)
+
         # Verify no missing values
         remaining_missing = int(df.isna().sum().sum())
         if remaining_missing != 0:
