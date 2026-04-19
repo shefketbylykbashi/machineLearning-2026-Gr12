@@ -1437,3 +1437,94 @@ Input: 50 raw features  (11 categorical marked as cat_features — NO one-hot)
 ```
 
 **Why it works**: gradient boosting builds a powerful non-linear model by stacking many **weak learners** (shallow trees), each specializing on the mistakes of the previous ones. The combination of small learning rate, shallow trees, L2 leaf regularization, and early stopping keeps the model from overfitting even on only ~2,000 training rows.
+
+
+---
+
+### 4. Neural Network (Feedforward with Entity Embeddings)
+
+**Source**: `src/ml/neural_net/train_neural_net.py`
+**Output**: `data/models/neural_net/`
+
+#### Algorithm Description
+
+A feedforward neural network learns a non-linear mapping from input features to output classes through multiple layers of weighted transformations. Each layer applies: (1) a **linear transformation** ($y = Wx + b$), (2) **batch normalization** for training stability, (3) a **ReLU activation** ($f(x) = \max(0, x)$) for non-linearity, and (4) **dropout** (randomly zeroing neurons) to prevent overfitting.
+
+The key design choice for this dataset is **entity embeddings**: instead of one-hot encoding the 11 categorical features (which would create 1,000+ sparse columns), each category is mapped to a compact learned vector. For example, `zona_kadastrale` gets a 50-dimensional embedding — the network learns that geographically similar zones should have similar vectors.
+
+**Class-weighted cross-entropy loss** penalizes errors on rare classes more heavily, and **early stopping** monitors validation loss to halt training before overfitting occurs.
+
+#### Architecture
+```
+Input: 11 categorical features (→ entity embeddings) + 41 numeric features (→ StandardScaler)
+       ↓
+Embedding Layer: 11 embedding tables, total ~200 dimensions
+       ↓ concatenate with 41 scaled numeric features
+Hidden Layer 1: 256 neurons + BatchNorm + ReLU + Dropout(0.3)
+       ↓
+Hidden Layer 2: 128 neurons + BatchNorm + ReLU + Dropout(0.3)
+       ↓
+Hidden Layer 3: 64 neurons + BatchNorm + ReLU + Dropout(0.3)
+       ↓
+Output Layer: 8 neurons (one per buyer profile class)
+       ↓ argmax
+Prediction: buyer_profile class
+
+Total parameters: 193,402
+```
+
+#### Configuration
+- **Framework**: PyTorch
+- **Optimizer**: Adam (lr=0.001, weight_decay=1e-4)
+- **Batch Size**: 64
+- **Max Epochs**: 200
+- **Early Stopping Patience**: 20 epochs
+- **Best Epoch**: 17 (validation loss = 0.4185, then monotonically increased)
+- **Validation Split**: 15% of training data
+
+#### Results
+
+| Metric | 5-Fold CV (mean ± std) | Validation | Test |
+|---|---|---|---|
+| Accuracy | 92.82% ± 1.67% | 90.19% | 88.59% |
+| Balanced Accuracy | 89.14% ± 3.12% | 84.98% | 83.00% |
+| Macro F1 | 90.04% ± 2.86% | 83.38% | 82.71% |
+| Weighted F1 | 92.77% ± 1.69% | 90.41% | 88.39% |
+
+#### Analysis
+
+The neural network is the **second-best model** after CatBoost. Its entity embeddings successfully capture relationships between high-cardinality categorical features. The training loss curve shows clear convergence with overfitting beginning at epoch 17 — the early stopping mechanism correctly saved the best weights from that epoch.
+
+The gap between CV macro F1 (90.0%) and test macro F1 (82.7%) suggests some degree of sensitivity to the specific data split, though the model generalizes well overall.
+
+#### Visualizations
+
+**Training & Validation Loss Curve**
+![Neural Net Loss Curve](visualizations/ml/neural_net/loss_curve.png)
+
+The loss curve shows two distinct phases: **learning** (epochs 1–17) where both train and validation loss decrease rapidly, and **overfitting** (epochs 18–37) where training loss continues to drop while validation loss increases. The best model weights were saved at epoch 17 (validation loss = 0.4185). The growing gap between train and validation loss after epoch 17 is a textbook example of neural network overfitting — the model begins memorizing training examples rather than learning generalizable patterns.
+
+**Confusion Matrix (Test Set)**
+![Neural Net Confusion Matrix](visualizations/ml/neural_net/confusion_matrix_test.png)
+
+The dominant misclassification pattern is `individual__industrial_ops` being confused with `individual__commercial_services` (16 errors). This same confusion occurs in the LLC categories too (5 `llc__industrial_ops` → `llc__commercial_services`). The entity embeddings help distinguish entity types (individual vs. LLC) but still struggle to separate economic sectors when the features are similar.
+
+**Per-Class F1 Score**
+![Neural Net Per-Class F1](visualizations/ml/neural_net/per_class_f1_test.png)
+
+The neural network achieves perfect F1 (1.000) on `individual__unknown` and strong scores on `individual__primary` (0.833) and `llc__industrial_ops` (0.843). The weakest classes are `llc__primary` (0.667) and `individual__industrial_ops` (0.695), both of which are mid-frequency classes where the model has enough data to learn but insufficient signal to separate from larger classes.
+
+**Precision & Recall per Class**
+![Neural Net Precision Recall](visualizations/ml/neural_net/precision_recall_test.png)
+
+The precision-recall trade-offs vary by class: `individual__industrial_ops` has much higher precision than recall, meaning the model correctly identifies most of the cases it labels as this class but misses many actual instances. Conversely, `individual__primary` has high recall but lower precision.
+
+**Cross-Validation Fold Comparison**
+![Neural Net CV Folds](visualizations/ml/neural_net/cv_fold_comparison.png)
+
+The 5-fold CV shows meaningful variability — macro F1 ranges from 0.859 (Fold 4) to 0.944 (Fold 5). This ~8.5% spread is larger than CatBoost's (~5.5%), reflecting the neural network's higher sensitivity to data splits. The variance is partly because each fold trains from a random initialization, introducing non-deterministic variation.
+
+**Validation vs Test**
+![Neural Net Val vs Test](visualizations/ml/neural_net/validation_vs_test.png)
+
+There is a noticeable gap between validation macro F1 (83.4%) and test macro F1 (82.7%), both lower than the CV average (90.0%). This gap between CV and holdout performance suggests the neural network benefits from the larger effective training sets in CV (80% × 2102 = 1682 per fold) compared to the final model's training subset (85% × 2102 = 1787 minus the validation split).
