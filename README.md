@@ -1122,7 +1122,7 @@ Repository: https://github.com/yourusername/machineLearning-2026-Gr12
 ```
 ---
 
-# Phase 2 : Model Training, Analysis & Evaluation
+# Phase 2 : Model Training
 
 ## Overview
 
