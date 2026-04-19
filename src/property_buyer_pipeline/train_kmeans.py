@@ -9,11 +9,13 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype, is_object_dtype, is_string_dtype
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
+from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score, silhouette_score
 from sklearn.pipeline import Pipeline
@@ -306,6 +308,127 @@ def build_cluster_profile_summary(
     return summary
 
 
+def plot_cluster_selection_metrics(
+    evaluations: list[dict[str, Any]],
+    output_path: Path,
+) -> None:
+    metrics_df = pd.DataFrame(evaluations).sort_values("n_clusters")
+    x = metrics_df["n_clusters"]
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    plot_specs = [
+        ("silhouette_score", "Silhouette Score", "#1f77b4"),
+        ("inertia", "Inertia", "#ff7f0e"),
+        ("calinski_harabasz_score", "Calinski-Harabasz", "#2ca02c"),
+        ("davies_bouldin_score", "Davies-Bouldin", "#d62728"),
+    ]
+
+    for ax, (column, title, color) in zip(axes.ravel(), plot_specs, strict=False):
+        ax.plot(x, metrics_df[column], marker="o", color=color)
+        ax.set_title(title)
+        ax.set_xlabel("Number of Clusters")
+        ax.set_xticks(x)
+        ax.grid(alpha=0.25)
+
+    fig.suptitle("KMeans Cluster Selection Metrics", fontsize=14)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_cluster_size_distribution(labels: np.ndarray, output_path: Path) -> None:
+    counts = pd.Series(labels).value_counts().sort_index()
+    positions = np.arange(len(counts))
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.bar(positions, counts.values, color="#4c956c")
+    ax.set_title("Cluster Size Distribution")
+    ax.set_xlabel("Cluster ID")
+    ax.set_ylabel("Rows")
+    ax.set_xticks(positions)
+    ax.set_xticklabels(counts.index.astype(str))
+    ax.grid(axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_cluster_pca_scatter(
+    X_matrix: np.ndarray,
+    labels: np.ndarray,
+    output_path: Path,
+) -> None:
+    pca = PCA(n_components=2, random_state=42)
+    components = pca.fit_transform(X_matrix)
+
+    fig, ax = plt.subplots(figsize=(9, 7))
+    scatter = ax.scatter(
+        components[:, 0],
+        components[:, 1],
+        c=labels,
+        cmap="tab10",
+        s=22,
+        alpha=0.75,
+        edgecolors="none",
+    )
+    ax.set_title("KMeans Clusters in PCA Space")
+    ax.set_xlabel(f"PCA 1 ({pca.explained_variance_ratio_[0] * 100:.1f}% var)")
+    ax.set_ylabel(f"PCA 2 ({pca.explained_variance_ratio_[1] * 100:.1f}% var)")
+    legend = ax.legend(*scatter.legend_elements(), title="Cluster", loc="best")
+    ax.add_artist(legend)
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_cluster_profile_heatmap(
+    assignments_df: pd.DataFrame,
+    cluster_column: str,
+    reference_target_column: str,
+    output_path: Path,
+) -> None:
+    if reference_target_column not in assignments_df.columns:
+        return
+
+    heatmap_df = pd.crosstab(
+        assignments_df[cluster_column],
+        assignments_df[reference_target_column],
+        normalize="index",
+    ).sort_index()
+
+    fig_width = max(9, len(heatmap_df.columns) * 0.9)
+    fig_height = max(4.8, len(heatmap_df.index) * 0.9)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    im = ax.imshow(heatmap_df.values, aspect="auto", cmap="YlGnBu", vmin=0, vmax=1)
+
+    ax.set_title("Cluster Composition by Buyer Profile")
+    ax.set_xlabel("Buyer Profile")
+    ax.set_ylabel("Cluster ID")
+    ax.set_xticks(np.arange(len(heatmap_df.columns)))
+    ax.set_xticklabels(heatmap_df.columns, rotation=45, ha="right")
+    ax.set_yticks(np.arange(len(heatmap_df.index)))
+    ax.set_yticklabels(heatmap_df.index.astype(str))
+
+    for i in range(heatmap_df.shape[0]):
+        for j in range(heatmap_df.shape[1]):
+            value = heatmap_df.iat[i, j]
+            if value >= 0.08:
+                ax.text(
+                    j,
+                    i,
+                    f"{value:.2f}",
+                    ha="center",
+                    va="center",
+                    color="white" if value > 0.45 else "black",
+                    fontsize=8,
+                )
+
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Share within cluster")
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     setup_logging()
 
@@ -383,6 +506,26 @@ def main() -> None:
         assignments_df,
         cluster_column="cluster_id",
         reference_target_column=cfg.target_column,
+    )
+
+    plot_cluster_selection_metrics(
+        evaluations,
+        cfg.output_dir / "cluster_selection_metrics.png",
+    )
+    plot_cluster_size_distribution(
+        cluster_labels,
+        cfg.output_dir / "cluster_sizes.png",
+    )
+    plot_cluster_pca_scatter(
+        X_matrix,
+        cluster_labels,
+        cfg.output_dir / "cluster_pca_scatter.png",
+    )
+    plot_cluster_profile_heatmap(
+        assignments_df,
+        cluster_column="cluster_id",
+        reference_target_column=cfg.target_column,
+        output_path=cfg.output_dir / "cluster_profile_heatmap.png",
     )
 
     save_json(

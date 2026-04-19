@@ -52,7 +52,7 @@
     },
     {
       "n_clusters": 9,
-      "inertia": 73022.17252959519,
+      "inertia": 73022.1725295952,
       "silhouette_score": 0.1354915482300108,
       "calinski_harabasz_score": 229.1306772860266,
       "davies_bouldin_score": 1.8169330701313635

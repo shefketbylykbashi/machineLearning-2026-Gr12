@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype, is_object_dtype, is_string_dtype
@@ -407,6 +408,101 @@ def extract_feature_importance(pipeline: Pipeline, output_path: Path) -> pd.Data
     return feature_importance_df
 
 
+def plot_confusion_matrix_figure(
+    y_true: pd.Series,
+    y_pred: np.ndarray,
+    labels: list[str],
+    output_path: Path,
+    title: str,
+) -> None:
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    fig_width = max(8, len(labels) * 1.15)
+    fig_height = max(6, len(labels) * 0.95)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    im = ax.imshow(cm, cmap="Blues")
+
+    ax.set_title(title)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.set_yticks(np.arange(len(labels)))
+    ax.set_yticklabels(labels)
+
+    threshold = cm.max() / 2 if cm.size else 0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            value = int(cm[i, j])
+            ax.text(
+                j,
+                i,
+                str(value),
+                ha="center",
+                va="center",
+                color="white" if value > threshold else "black",
+                fontsize=9,
+            )
+
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_class_metrics_figure(
+    classification_report_dict: dict[str, Any],
+    labels: list[str],
+    output_path: Path,
+    title: str,
+) -> None:
+    metrics_df = pd.DataFrame(
+        {
+            "label": labels,
+            "precision": [classification_report_dict.get(label, {}).get("precision", 0.0) for label in labels],
+            "recall": [classification_report_dict.get(label, {}).get("recall", 0.0) for label in labels],
+            "f1-score": [classification_report_dict.get(label, {}).get("f1-score", 0.0) for label in labels],
+        }
+    )
+
+    x = np.arange(len(labels))
+    width = 0.24
+    fig_width = max(9, len(labels) * 1.2)
+    fig, ax = plt.subplots(figsize=(fig_width, 6.5))
+    ax.bar(x - width, metrics_df["precision"], width=width, label="Precision", color="#1f77b4")
+    ax.bar(x, metrics_df["recall"], width=width, label="Recall", color="#ff7f0e")
+    ax.bar(x + width, metrics_df["f1-score"], width=width, label="F1", color="#2ca02c")
+
+    ax.set_title(title)
+    ax.set_ylabel("Score")
+    ax.set_ylim(0, 1.05)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.legend()
+    ax.grid(axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_feature_importance_figure(
+    feature_importance_df: pd.DataFrame,
+    output_path: Path,
+    title: str,
+    top_n: int = 20,
+) -> None:
+    plot_df = feature_importance_df.head(top_n).iloc[::-1].copy()
+
+    fig_height = max(6, top_n * 0.36)
+    fig, ax = plt.subplots(figsize=(11, fig_height))
+    ax.barh(plot_df["feature"], plot_df["mean_abs_coefficient"], color="#2a6f97")
+    ax.set_title(title)
+    ax.set_xlabel("Mean Absolute Coefficient")
+    ax.grid(axis="x", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
 def run_cross_validation(
     X: pd.DataFrame,
     y: pd.Series,
@@ -562,6 +658,26 @@ def main() -> None:
     feature_importance_df = extract_feature_importance(
         pipeline,
         cfg.output_dir / "feature_importance.csv",
+    )
+    class_labels = sorted(y_train_all.unique().tolist())
+
+    plot_confusion_matrix_figure(
+        y_test,
+        y_test_pred,
+        class_labels,
+        cfg.output_dir / "test_confusion_matrix.png",
+        "Logistic Regression Test Confusion Matrix",
+    )
+    plot_class_metrics_figure(
+        test_metrics["classification_report"],
+        class_labels,
+        cfg.output_dir / "test_class_metrics.png",
+        "Logistic Regression Test Class Metrics",
+    )
+    plot_feature_importance_figure(
+        feature_importance_df,
+        cfg.output_dir / "feature_importance_top20.png",
+        "Top Logistic Regression Features",
     )
 
     model_path = cfg.output_dir / "buyer_profile_logistic_regression_pipeline.joblib"
