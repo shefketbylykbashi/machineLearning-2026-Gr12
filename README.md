@@ -1245,3 +1245,98 @@ Input:  features (e.g., area, price, time, quality flags, categorical codes)
 ```
 
 **Why it works**: individual trees are high-variance (they overfit), but averaging many decorrelated trees (via bagging + feature subsampling) cancels out their individual errors.
+
+---
+
+### 2. Logistic Regression
+
+**Source**: `src/property_buyer_pipeline/train_linear.py`
+**Output**: `data/models/property_buyer/logistic_regression_full_v1/`
+
+#### Algorithm Description
+
+Logistic Regression extends linear regression to classification by applying the **softmax function** to map linear combinations of features into class probabilities. For multiclass problems, it learns one set of weights per class. It is fast, interpretable, and works well when relationships between features and target are roughly linear.
+
+The L2 (Ridge) regularization penalty prevents overfitting by shrinking coefficients toward zero, controlled by the `C` parameter (inverse regularization strength).
+
+#### Configuration
+- **Penalty**: L2 (Ridge)
+- **C**: 1.0
+- **Solver**: LBFGS (quasi-Newton method, efficient for multiclass)
+- **Max Iterations**: 8,000
+
+#### Results
+
+| Metric | 5-Fold CV (mean ± std) | Validation | Test |
+|---|---|---|---|
+| Accuracy | 83.54% ± 1.92% | 85.76% | 83.27% |
+| Balanced Accuracy | 78.88% ± 3.26% | 77.26% | 79.23% |
+| Macro F1 | 73.75% ± 2.57% | 73.93% | 72.86% |
+| Weighted F1 | 84.37% ± 1.68% | 86.19% | 83.94% |
+
+#### Analysis
+
+Logistic Regression performs slightly better than Random Forest in **balanced accuracy** (+11%) and **macro F1** (+4%) despite similar overall accuracy.  
+
+#### Visualizations
+
+**Confusion Matrix (Test Set)**
+![Logistic Regression Confusion Matrix](visualizations/ml/logistic_regression/confusion_matrix_test.png)
+
+Compared to Random Forest, Logistic Regression produces a cleaner confusion matrix. The main misclassifications are: 9 `individual__commercial_services` predicted as `individual__industrial_ops`, and 7 `llc__industrial_ops` predicted as `llc__commercial_services`. 
+
+**Per-Class F1 Score**
+![Logistic Regression Per-Class F1](visualizations/ml/logistic_regression/per_class_f1_test.png)
+
+
+**Precision & Recall per Class**
+![Logistic Regression Precision Recall](visualizations/ml/logistic_regression/precision_recall_test.png)
+
+The precision-recall balance is more uniform than Random Forest. Most classes achieve >0.60 on both metrics.
+
+**Cross-Validation Fold Comparison**
+![Logistic Regression CV Folds](visualizations/ml/logistic_regression/cv_fold_comparison.png)
+
+Fold-to-fold variation is moderate — accuracy spans 81–86% and macro F1 spans 71–77%. The linear model's simplicity provides stable estimates without the high variance sometimes seen in more complex models.
+
+**Validation vs Test**
+![Logistic Regression Val vs Test](visualizations/ml/logistic_regression/validation_vs_test.png)
+
+Validation and test scores are closely aligned. Balanced accuracy is slightly higher on the test set (79.2%) than validation (77.3%), suggesting the test split happens to contain slightly easier minority-class examples — a normal random effect at this sample size.
+
+#### Architecture
+
+Logistic Regression is a **single-layer linear model** with softmax output. For a K-class problem it learns one weight vector $w_k$ and bias $b_k$ per class. The softmax converts raw scores (logits) into a probability distribution over the 8 buyer profiles.
+
+```
+Input: 50 raw features 
+       │
+       ▼
+ ┌────────────────────────────────────────────────┐
+ │  Preprocessing                                           │
+ │    • Numeric   → StandardScaler  (mean 0, std 1)          │
+ │    • Categorical → OneHotEncoder (250+ activities, ...)   │
+ └────────────────────────────────────────────────┘
+       │
+       ▼
+  Transformed feature vector x (~438 dims after one-hot)
+       │
+       ▼
+ ┌────────────────────────────────────────────────┐
+ │  Linear scoring (8 class-weight vectors, one per profile)│
+ │     z_k = w_k · x + b_k        for k = 1..8                │
+ └────────────────────────────────────────────────┘
+       │
+       ▼
+ ┌────────────────────────────────────────────────┐
+ │  Softmax: p_k = exp(z_k) / Σ_j exp(z_j)                   │
+ └────────────────────────────────────────────────┘
+       │
+       ▼
+  Probabilities p_1..p_8  →  argmax → buyer_profile class
+
+Training: minimize cross-entropy + L2 penalty (C = 1.0)
+Solver: LBFGS (quasi-Newton) — up to 8,000 iterations
+```
+
+**Why it works**: if the boundary between classes is roughly linear in the transformed feature space, a single hyperplane per class is enough. The L2 penalty shrinks coefficients, keeping the 438-dim model from overfitting the 2,100-row training set. **Why it's limited**: it cannot capture non-linear interactions between features (e.g., "high capital AND commercial activity") unless those interactions are engineered manually.
