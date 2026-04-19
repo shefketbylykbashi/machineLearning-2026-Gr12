@@ -1120,9 +1120,128 @@ Property Buyer Prediction Dataset & ETL Pipeline.
 Machine Learning Project (2026).
 Repository: https://github.com/yourusername/machineLearning-2026-Gr12
 ```
+---
+
+# Phase 2 : Model Training, Analysis & Evaluation
+
+## Overview
+
+With the cleaned, feature-engineered dataset produced by Phase 1 (2,628 records, ~50 features, 8 buyer-profile classes), Phase 2 applies multiple machine learning algorithms — both **supervised** and **unsupervised** — to predict or discover `buyer_profile` patterns.
+
+All models are trained on `data/processed/property_buyer/train_dataset_v1.0.xlsx` (2,102 rows, 80%) and evaluated on `data/processed/property_buyer/test_dataset_v1.0.xlsx` (526 rows, 20%). The four supervised models use **stratified 5-fold cross-validation** on the training set; the autoencoder uses **3-fold CV** because each fold retrains the entire network from scratch. Each model's artefacts (weights, metrics, predictions, visualizations) are persisted under `data/models/`.
+
+### Target Variable
+
+**`buyer_profile`** — 8-class categorical variable combining buyer entity type and economic sector:
+
+| Class | Count (Train) | Description |
+|---|---|---|
+| `individual__commercial_services` | 1,072 | Individual buyers in commerce/services |
+| `llc__commercial_services` | 390 | LLCs in commerce/services |
+| `individual__industrial_ops` | 200 | Individual buyers in industrial operations |
+| `llc__industrial_ops` | 171 | LLCs in industrial operations |
+| `individual__unknown` | 106 | Individuals with unknown sector |
+| `individual__primary` | 88 | Individuals in primary sector (agriculture) |
+| `llc__primary` | 40 | LLCs in primary sector |
+| `individual__public_social` | 35 | Individuals in public/social sector |
+
+The class distribution is **imbalanced** (largest class is ~30× the smallest), which requires class-weighted loss functions and balanced metrics (macro F1, balanced accuracy) for fair evaluation.
+
+### Evaluation Metrics
+
+All supervised models report:
+- **Accuracy** — overall fraction of correct predictions
+- **Balanced Accuracy** — average of per-class recall (unaffected by class imbalance)
+- **Macro F1** — unweighted average F1 across all 8 classes (primary metric)
+- **Weighted F1** — F1 weighted by class support
+- **Confusion Matrix** — full 8×8 prediction breakdown
+- **Per-class Precision, Recall, F1** — detailed per-profile performance
 
 ---
 
-# Phase 2 : Analysis and Evaluation (Retraining)
+## Supervised Algorithms
 
-This section covers the model training techniques applied, results obtained, and detailed discussion of decisions made
+### 1. Random Forest
+
+**Source**: `src/property_buyer_pipeline/train_random_forest.py`
+**Output**: `data/models/property_buyer/random_forest_property/`
+
+#### Algorithm Description
+
+Random Forest is an **ensemble** of decision trees. Each tree is trained on a random bootstrap sample of the data using a random subset of features at each split. The final prediction is the majority vote across all trees. This reduces overfitting compared to a single decision tree and handles both numeric and categorical features naturally.
+
+#### Configuration
+- **Estimators**: 1,200 trees
+- **Max Depth**: 24
+- **Min Samples Split**: 6
+- **Max Features**: 35% of features per split
+
+#### Results
+
+| Metric | 5-Fold CV (mean ± std) | Validation | Test |
+|---|---|---|---|
+| Accuracy | 83.07% ± 1.63% | 84.18% | 82.32% |
+| Balanced Accuracy | 67.83% ± 3.70% | 67.54% | 67.62% |
+| Macro F1 | 69.50% ± 3.57% | 70.33% | 68.70% |
+| Weighted F1 | 82.86% ± 1.60% | 83.57% | 81.79% |
+
+#### Analysis
+
+Random Forest achieves solid baseline accuracy but lower balanced accuracy and macro F1, indicating it **struggles with minority classes** (e.g., `llc__primary`, `individual__public_social`).
+
+#### Visualizations
+
+**Confusion Matrix (Test Set)**
+![Random Forest Confusion Matrix](visualizations/ml/random_forest/confusion_matrix_test.png)
+
+The confusion matrix reveals the model's main failure mode: it frequently confuses **industrial operations with commercial services** — 24 `individual__industrial_ops` samples were misclassified as `individual__commercial_services`, and 14 `llc__industrial_ops` samples as `llc__commercial_services`. 
+
+**Per-Class F1 Score**
+![Random Forest Per-Class F1](visualizations/ml/random_forest/per_class_f1_test.png)
+
+The F1 scores show a stark split: high-frequency classes (`individual__unknown` at 0.976, `individual__commercial_services` at 0.908) perform well, while minority classes suffer — `individual__public_social` achieves only 0.333 F1. This imbalance drives the large gap between overall accuracy (82%) and macro F1 (69%).
+
+**Precision & Recall per Class**
+![Random Forest Precision Recall](visualizations/ml/random_forest/precision_recall_test.png)
+
+Precision and recall are uneven across classes. The model has high precision but low recall for several minority classes — it rarely predicts them, but when it does, it's often correct. `individual__public_social` has both low precision and recall, indicating the model largely ignores this class.
+
+**Cross-Validation Fold Comparison**
+![Random Forest CV Folds](visualizations/ml/random_forest/cv_fold_comparison.png)
+
+The 5-fold CV results are reasonably stable (accuracy ranges 81–86%), with `balanced_accuracy` showing the most variability (64–73%) across folds. This confirms that minority class performance is sensitive to which samples land in each fold.
+
+**Validation vs Test**
+![Random Forest Val vs Test](visualizations/ml/random_forest/validation_vs_test.png)
+
+Validation and test metrics are closely aligned (within 2%), indicating the model generalizes consistently and is not overfitting to the validation set.
+
+#### Architecture
+
+Random Forest is an **ensemble of independent decision trees** trained in parallel. Each tree sees a different random view of the data (bagging + feature subsampling), and the forest's prediction is a majority vote across all trees.
+
+```
+Input:  features (e.g., area, price, time, quality flags, categorical codes)
+       │
+       ▼
+ ┌─────────────────────────────────────────────────────┐
+ │  Bootstrap sampling: draw N rows with replacement per tree          │
+ │  Feature sampling: random 35% of features considered at each split  │
+ └─────────────────────────────────────────────────────┘
+       │
+       ▼
+ Tree 1        Tree 2        Tree 3       ...      Tree 1200
+   │             │             │                      │
+   ▼             ▼             ▼                      ▼
+ (recursive splits on Gini impurity, max depth = 24, min split = 6)
+   │             │             │                      │
+ class prob.   class prob.   class prob.           class prob.
+       │             │             │                      │
+       └─────────────┴─────────────┬─────────────────────────┘
+                             ▼
+              Average probabilities across 1,200 trees
+                             ▼
+             Prediction: argmax → buyer_profile class
+```
+
+**Why it works**: individual trees are high-variance (they overfit), but averaging many decorrelated trees (via bagging + feature subsampling) cancels out their individual errors.
