@@ -316,17 +316,17 @@
   ],
   "missing_value_treatment": {
     "rule_based_fills": {
-      "arbk_pronari_1_kapitali": {
+      "arbk_kapitali": {
         "strategy": "fill_zero",
-        "filled": 102
+        "filled": 1327
       },
       "arbk_pronari_1_kapitaliperqindje": {
         "strategy": "fill_zero",
         "filled": 96
       },
-      "arbk_kapitali": {
+      "arbk_pronari_1_kapitali": {
         "strategy": "fill_zero",
-        "filled": 1327
+        "filled": 102
       },
       "arbk_aktiviteti_1_pershkrimi": {
         "strategy": "fill_aktivitete_tjera",
@@ -450,13 +450,57 @@
     "profiles_created": 16,
     "unknown_profile_rows": 146
   },
+  "allowed_buyer_profiles_filter": {
+    "allowed_profiles": [
+      "individual__commercial_services",
+      "individual__industrial_ops",
+      "individual__primary",
+      "individual__public_social",
+      "individual__unknown",
+      "llc__commercial_services",
+      "llc__industrial_ops",
+      "llc__primary"
+    ],
+    "rows_before": 2687,
+    "rows_after": 2628,
+    "rows_removed": 59,
+    "profiles_before": [
+      "branch__commercial_services",
+      "corporation__commercial_services",
+      "corporation__industrial_ops",
+      "individual__commercial_services",
+      "individual__industrial_ops",
+      "individual__primary",
+      "individual__public_social",
+      "individual__unknown",
+      "llc__commercial_services",
+      "llc__industrial_ops",
+      "llc__primary",
+      "llc__public_social",
+      "llc__unknown",
+      "partnership__commercial_services",
+      "partnership__industrial_ops",
+      "partnership__unknown"
+    ],
+    "profiles_after": [
+      "individual__commercial_services",
+      "individual__industrial_ops",
+      "individual__primary",
+      "individual__public_social",
+      "individual__unknown",
+      "llc__commercial_services",
+      "llc__industrial_ops",
+      "llc__primary"
+    ],
+    "profiles_remaining_count": 8
+  },
   "remaining_missing_values_after_fill": 0,
   "rows_removed_rare_targets": 0,
-  "buyers_remaining": 2253,
+  "buyers_remaining": 2206,
   "raw_date_columns_removed": [
     "data_e_kontrates",
     "arbk_dataregjistrimit"
   ],
-  "rows_final_after_all_transformations": 2687,
+  "rows_final_after_all_transformations": 2628,
   "columns_final_after_all_transformations": 71
 }

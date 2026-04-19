@@ -1,0 +1,432 @@
+{
+  "validation": {
+    "accuracy": 0.9620253164556962,
+    "balanced_accuracy": 0.9422764137115648,
+    "macro_f1": 0.936779310354678,
+    "weighted_f1": 0.9623563698442702,
+    "classification_report": {
+      "individual__commercial_services": {
+        "precision": 0.9937106918238994,
+        "recall": 0.9813664596273292,
+        "f1-score": 0.9875,
+        "support": 161.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.8529411764705882,
+        "recall": 0.9666666666666667,
+        "f1-score": 0.90625,
+        "support": 30.0
+      },
+      "individual__primary": {
+        "precision": 0.9230769230769231,
+        "recall": 0.9230769230769231,
+        "f1-score": 0.9230769230769231,
+        "support": 13.0
+      },
+      "individual__public_social": {
+        "precision": 0.8333333333333334,
+        "recall": 1.0,
+        "f1-score": 0.9090909090909091,
+        "support": 5.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 16.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.9655172413793104,
+        "recall": 0.9491525423728814,
+        "f1-score": 0.9572649572649573,
+        "support": 59.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.92,
+        "recall": 0.8846153846153846,
+        "f1-score": 0.9019607843137255,
+        "support": 26.0
+      },
+      "llc__primary": {
+        "precision": 1.0,
+        "recall": 0.8333333333333334,
+        "f1-score": 0.9090909090909091,
+        "support": 6.0
+      },
+      "accuracy": 0.9620253164556962,
+      "macro avg": {
+        "precision": 0.9360724207605068,
+        "recall": 0.9422764137115648,
+        "f1-score": 0.936779310354678,
+        "support": 316.0
+      },
+      "weighted avg": {
+        "precision": 0.9640121537525677,
+        "recall": 0.9620253164556962,
+        "f1-score": 0.9623563698442702,
+        "support": 316.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        158,
+        1,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        29,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        56,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        1,
+        0,
+        0,
+        23,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        5
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.9562737642585551,
+    "balanced_accuracy": 0.9236603654192204,
+    "macro_f1": 0.9112297312562732,
+    "weighted_f1": 0.9583940854070068,
+    "classification_report": {
+      "individual__commercial_services": {
+        "precision": 0.9856115107913669,
+        "recall": 0.9750889679715302,
+        "f1-score": 0.9803220035778175,
+        "support": 281.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.8596491228070176,
+        "recall": 0.9245283018867925,
+        "f1-score": 0.8909090909090909,
+        "support": 53.0
+      },
+      "individual__primary": {
+        "precision": 1.0,
+        "recall": 0.8333333333333334,
+        "f1-score": 0.9090909090909091,
+        "support": 18.0
+      },
+      "individual__public_social": {
+        "precision": 0.5294117647058824,
+        "recall": 0.9,
+        "f1-score": 0.6666666666666666,
+        "support": 10.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 21.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.9888888888888889,
+        "recall": 0.9468085106382979,
+        "f1-score": 0.967391304347826,
+        "support": 94.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.9523809523809523,
+        "recall": 0.9523809523809523,
+        "f1-score": 0.9523809523809523,
+        "support": 42.0
+      },
+      "llc__primary": {
+        "precision": 1.0,
+        "recall": 0.8571428571428571,
+        "f1-score": 0.9230769230769231,
+        "support": 7.0
+      },
+      "accuracy": 0.9562737642585551,
+      "macro avg": {
+        "precision": 0.9144927799467635,
+        "recall": 0.9236603654192204,
+        "f1-score": 0.9112297312562732,
+        "support": 526.0
+      },
+      "weighted avg": {
+        "precision": 0.9634370936193165,
+        "recall": 0.9562737642585551,
+        "f1-score": 0.9583940854070068,
+        "support": 526.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        274,
+        3,
+        0,
+        3,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        49,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        15,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        9,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        21,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        0,
+        0,
+        0,
+        89,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        40,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        6
+      ]
+    ]
+  },
+  "cv_summary": {
+    "accuracy": {
+      "mean": 0.9557595294649927,
+      "std": 0.008574818495705502,
+      "min": 0.9453681710213777,
+      "max": 0.969047619047619
+    },
+    "balanced_accuracy": {
+      "mean": 0.9447508192862463,
+      "std": 0.015514799031062702,
+      "min": 0.9238310813293713,
+      "max": 0.9664755307227132
+    },
+    "macro_f1": {
+      "mean": 0.9193170565390313,
+      "std": 0.020248303813054525,
+      "min": 0.8914787037273028,
+      "max": 0.9413877936521484
+    },
+    "weighted_f1": {
+      "mean": 0.9578344851874097,
+      "std": 0.0072324833707348,
+      "min": 0.946929704791464,
+      "max": 0.9689472875400795
+    }
+  },
+  "top_25_feature_importance": [
+    {
+      "feature": "arbk_aktiviteti_1_pershkrimi",
+      "importance": 49.05792908222477
+    },
+    {
+      "feature": "capital_to_sale_price_ratio",
+      "importance": 12.131225252565105
+    },
+    {
+      "feature": "arbk_kapitali",
+      "importance": 12.080654102423358
+    },
+    {
+      "feature": "arbk_pronari_1_kapitali",
+      "importance": 4.554277933331452
+    },
+    {
+      "feature": "qytet_apo_fshat_lokacioni_i_asetit_te_shitur",
+      "importance": 2.8978289065301457
+    },
+    {
+      "feature": "arbk_pronari_1_kapitali_is_outlier_iqr",
+      "importance": 2.420388008737523
+    },
+    {
+      "feature": "asset_structure_type",
+      "importance": 2.418371911350906
+    },
+    {
+      "feature": "arbk_aktiviteti_2_pershkrimi",
+      "importance": 2.385066770898076
+    },
+    {
+      "feature": "capital_to_sale_price_ratio_is_outlier_iqr",
+      "importance": 2.294558116681792
+    },
+    {
+      "feature": "eshte_shitur_si_ndermarrje_e_re_apo_aset_ne_likuidim",
+      "importance": 1.8819695328224997
+    },
+    {
+      "feature": "arbk_statusiarbk",
+      "importance": 1.5117666410963086
+    },
+    {
+      "feature": "business_age_years_at_sale",
+      "importance": 1.301383798358769
+    },
+    {
+      "feature": "arbk_aktiviteti_1_kodinace_is_outlier_iqr",
+      "importance": 1.0059425191881073
+    },
+    {
+      "feature": "rajoni_akp",
+      "importance": 0.6599315486253164
+    },
+    {
+      "feature": "komuna_lokacioni_i_asetit_te_shitur",
+      "importance": 0.6370290658634505
+    },
+    {
+      "feature": "menyra_e_shitjes",
+      "importance": 0.6280057779499819
+    },
+    {
+      "feature": "business_age_days_at_sale",
+      "importance": 0.5438453694184139
+    },
+    {
+      "feature": "kategoria_e_asetit",
+      "importance": 0.4821157159344925
+    },
+    {
+      "feature": "arbk_aktiviteti_3_kodinace_is_outlier_iqr",
+      "importance": 0.20489284331788707
+    },
+    {
+      "feature": "total_area_m2",
+      "importance": 0.14012067793649438
+    },
+    {
+      "feature": "price_per_object_m2",
+      "importance": 0.08936136349730604
+    },
+    {
+      "feature": "arbk_numripunetoreve",
+      "importance": 0.07641873748606637
+    },
+    {
+      "feature": "contract_year",
+      "importance": 0.06954829480124716
+    },
+    {
+      "feature": "is_land_only",
+      "importance": 0.06390190488329428
+    },
+    {
+      "feature": "contract_month",
+      "importance": 0.05993692561722361
+    }
+  ]
+}

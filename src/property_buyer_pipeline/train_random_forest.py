@@ -67,7 +67,7 @@ class TrainingConfig:
     @property
     def output_dir(self) -> Path:
         suffix = "no_zona" if self.drop_zona_kadastrale else "with_zona"
-        return self.output_root / f"random_forest_{self.feature_mode}_optimized_{suffix}_v1"
+        return self.output_root / f"random_forest_{self.feature_mode}_optimized_{suffix}_v6"
 
 
 # ============================================================
@@ -103,6 +103,24 @@ PROPERTY_CORE_FEATURES = [
     "qytet_apo_fshat_lokacioni_i_asetit_te_shitur",
     "zona_kadastrale",
     "eshte_shitur_si_ndermarrje_e_re_apo_aset_ne_likuidim",
+    "arbk_numripunetoreve",
+    "arbk_kapitali",
+    "business_age_days_at_sale",
+    "business_age_years_at_sale",
+    "capital_to_sale_price_ratio",
+    "arbk_kapitali_was_missing",
+    "arbk_dataregjistrimit_was_missing",
+    "arbk_statusiarbk",
+    #"arbk_aktiviteti_1_kodinace",
+    "arbk_aktiviteti_1_pershkrimi",
+    #"arbk_aktiviteti_2_kodinace",
+    "arbk_aktiviteti_2_pershkrimi",
+    "arbk_pronari_1_kapitali",
+    "arbk_pronari_1_kapitali_is_outlier_iqr",
+    "capital_to_sale_price_ratio_is_outlier_iqr",
+    "arbk_aktiviteti_1_kodinace_is_outlier_iqr",
+    "arbk_aktiviteti_2_kodinace_is_outlier_iqr",
+    "arbk_aktiviteti_3_kodinace_is_outlier_iqr",
 ]
 
 PROPERTY_AREA_FEATURES = [

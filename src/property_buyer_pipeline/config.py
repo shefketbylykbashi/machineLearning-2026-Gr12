@@ -168,3 +168,14 @@ OUTPUT_FILES = {
     "model": f"buyer_prediction_pipeline_{PIPELINE_VERSION}.joblib",
     "report": f"preparation_report_{PIPELINE_VERSION}.json",
 }
+
+ALLOWED_BUYER_PROFILES = {
+    "llc__commercial_services",
+    "individual__industrial_ops",
+    "individual__public_social",
+    "individual__commercial_services",
+    "llc__industrial_ops",
+    "llc__primary",
+    "individual__primary",
+    "individual__unknown",
+}

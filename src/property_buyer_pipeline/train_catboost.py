@@ -66,7 +66,7 @@ class TrainingConfig:
 
     @property
     def output_dir(self) -> Path:
-        return self.output_root / f"catboost_{self.feature_mode}_v3"
+        return self.output_root / f"catboost_{self.feature_mode}_v4"
 
 
 # ============================================================
@@ -146,9 +146,6 @@ QUALITY_FLAGS = [
 ]
 
 LIGHT_BUSINESS_FEATURES = [
-    # Lighter business context, not the full identity/activity footprint
-    #"arbk_nllojibiznesitid",
-    #"arbk_llojibiznesit",
     "arbk_numripunetoreve",
     "arbk_kapitali",
     "business_age_days_at_sale",
@@ -160,20 +157,8 @@ LIGHT_BUSINESS_FEATURES = [
 
 FULL_BUSINESS_FEATURES = [
     "arbk_statusiarbk",
-    "arbk_aktiviteti_1_kodinace",
     "arbk_aktiviteti_1_pershkrimi",
-    "arbk_aktiviteti_2_kodinace",
     "arbk_aktiviteti_2_pershkrimi",
-    #"arbk_aktiviteti_2_llojiaktivitetit",
-    #"arbk_aktiviteti_3_kodinace",
-    #"arbk_aktiviteti_3_pershkrimi",
-    #"arbk_aktiviteti_3_llojiaktivitetit",
-    #"arbk_aktiviteti_4_kodinace",
-    #"arbk_aktiviteti_4_pershkrimi",
-    #"arbk_aktiviteti_4_llojiaktivitetit",
-    #"arbk_aktiviteti_5_kodinace",
-    #"arbk_aktiviteti_5_pershkrimi",
-    #"arbk_aktiviteti_5_llojiaktivitetit",
     "arbk_pronari_1_kapitali",
     "arbk_pronari_1_kapitali_is_outlier_iqr",
     "capital_to_sale_price_ratio_is_outlier_iqr",

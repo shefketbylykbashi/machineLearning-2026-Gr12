@@ -7,7 +7,7 @@ from .config import (
     TARGET_COL, PROFILE_COL, MANDATORY_BUSINESS_COL, LEAKAGE_COLUMNS, NUMERIC_LIKE_COLUMNS,
     DATE_COLUMNS, AREA_COLUMNS, PRICE_COLUMN, SPARSE_COL_THRESHOLD,
     DOMINANT_VALUE_THRESHOLD, PROTECTED_COLUMNS, CATEGORICAL_DEFAULTS,
-    ZERO_FILL_COLUMNS, AREA_GROUP_MIN_SIZE, GENERIC_GROUP_MIN_SIZE, MIN_TARGET_FREQUENCY
+    ZERO_FILL_COLUMNS, AREA_GROUP_MIN_SIZE, GENERIC_GROUP_MIN_SIZE, MIN_TARGET_FREQUENCY, ALLOWED_BUYER_PROFILES,
 )
 from .utils import (
     clean_numeric_series, try_parse_datetime, classify_asset_masks, mode_or_default,
@@ -592,4 +592,31 @@ class TargetFilter:
         report["buyers_remaining"] = int(df[TARGET_COL].nunique())
         if before > len(df):
             print(f"Removed {before - len(df)} rows with rare targets")
+        return df
+    
+    @staticmethod
+    def keep_only_allowed_buyer_profiles(df: pd.DataFrame, report: dict) -> pd.DataFrame:
+        """Keep only selected buyer_profile classes."""
+        if PROFILE_COL not in df.columns:
+            raise KeyError(f"Column '{PROFILE_COL}' not found. Make sure buyer_profile is created first.")
+
+        before = len(df)
+        before_profiles = sorted(df[PROFILE_COL].dropna().unique().tolist())
+
+        df = df[df[PROFILE_COL].isin(ALLOWED_BUYER_PROFILES)].copy()
+
+        after = len(df)
+        after_profiles = sorted(df[PROFILE_COL].dropna().unique().tolist())
+
+        report["allowed_buyer_profiles_filter"] = {
+            "allowed_profiles": sorted(ALLOWED_BUYER_PROFILES),
+            "rows_before": int(before),
+            "rows_after": int(after),
+            "rows_removed": int(before - after),
+            "profiles_before": before_profiles,
+            "profiles_after": after_profiles,
+            "profiles_remaining_count": int(df[PROFILE_COL].nunique(dropna=True)),
+        }
+
+        print(f"Allowed buyer_profile filter applied: removed {before - after} rows")
         return df

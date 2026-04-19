@@ -119,7 +119,7 @@ class ETLPipeline:
 
         # Create the derived profile target once in the preprocessing pipeline.
         df = BuyerProfileEngineer.add_buyer_profile(df, self.report)
-
+        df = TargetFilter.keep_only_allowed_buyer_profiles(df, self.report)
         # Verify no missing values
         remaining_missing = int(df.isna().sum().sum())
         if remaining_missing != 0:
