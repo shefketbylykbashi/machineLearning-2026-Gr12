@@ -1340,3 +1340,100 @@ Solver: LBFGS (quasi-Newton) — up to 8,000 iterations
 ```
 
 **Why it works**: if the boundary between classes is roughly linear in the transformed feature space, a single hyperplane per class is enough. The L2 penalty shrinks coefficients, keeping the 438-dim model from overfitting the 2,100-row training set. **Why it's limited**: it cannot capture non-linear interactions between features (e.g., "high capital AND commercial activity") unless those interactions are engineered manually.
+
+---
+### 3. CatBoost
+
+**Source**: `src/property_buyer_pipeline/train_catboost.py`
+**Output**: `data/models/property_buyer/catboost_full/`
+
+#### Algorithm Description
+
+CatBoost (Categorical Boosting) is a **gradient boosting** algorithm specifically designed for datasets with categorical features. Unlike Random Forest (which trains trees independently), gradient boosting trains trees **sequentially** — each new tree corrects the errors of all previous trees. CatBoost's key innovation is **ordered target encoding** for categorical features, which avoids the information leakage that occurs with standard target encoding.
+
+The model uses class weights to handle the imbalanced target distribution and early stopping to prevent overfitting.
+
+#### Configuration
+- **Iterations**: 2,500 (max)
+- **Learning Rate**: 0.03
+- **Depth**: 7
+- **L2 Regularization**: 9.0
+- **Early Stopping**: 150 rounds without improvement
+- **Best Iteration**: 181 (stopped early)
+
+#### Results
+
+| Metric | 5-Fold CV (mean ± std) | Validation | Test |
+|---|---|---|---|
+| Accuracy | 95.58% ± 0.86% | 96.20% | 95.63% |
+| Balanced Accuracy | 94.48% ± 1.55% | 94.23% | 92.37% |
+| Macro F1 | 91.93% ± 2.02% | 93.68% | 91.12% |
+| Weighted F1 | 95.78% ± 0.72% | 96.24% | 95.84% |
+
+#### Analysis
+
+CatBoost is the **best-performing supervised model** across all metrics. It achieves 95.6% test accuracy and 91.1% macro F1, meaning it reliably identifies even rare buyer profiles. 
+
+CatBoost's ability to natively handle the 244 unique business activity descriptions (without manual encoding) gives it a significant advantage over models that require one-hot encoding.
+
+#### Visualizations
+
+**Confusion Matrix (Test Set)**
+![CatBoost Confusion Matrix](visualizations/ml/catboost/confusion_matrix_test.png)
+
+The confusion matrix is remarkably clean — the diagonal dominates almost every row. The largest off-diagonal values are only 3–4 samples. `individual__unknown` has zero misclassifications (perfect 1.000 F1). The model correctly separates LLC from individual buyers and accurately distinguishes industrial from commercial sectors.
+
+**Per-Class F1 Score**
+![CatBoost Per-Class F1](visualizations/ml/catboost/per_class_f1_test.png)
+
+Seven of eight classes achieve F1 > 0.89. Even traditionally difficult classes like `llc__primary` (only 7 test samples) reach 0.923 F1. The only class below 0.70 is `individual__public_social` (0.667), which has only 10 test samples — a sample size too small for reliable per-class estimates.
+
+**Precision & Recall per Class**
+![CatBoost Precision Recall](visualizations/ml/catboost/precision_recall_test.png)
+
+Precision and recall are well-balanced across nearly all classes, with no class showing extreme precision-recall trade-offs. This indicates the model's class-weight mechanism effectively prevents it from sacrificing minority-class recall for majority-class precision.
+
+**Cross-Validation Fold Comparison**
+![CatBoost CV Folds](visualizations/ml/catboost/cv_fold_comparison.png)
+
+All 5 folds achieve accuracy above 94.5% and macro F1 above 88%. The low standard deviation across folds (accuracy ± 0.86%) confirms that CatBoost's performance is stable and not dependent on a particular data split.
+
+**Validation vs Test**
+![CatBoost Val vs Test](visualizations/ml/catboost/validation_vs_test.png)
+
+Validation and test metrics are nearly identical (within 1–2%), demonstrating excellent generalization. The slight drop from validation to test balanced accuracy (94.2% → 92.4%) is within the expected range of random variation.
+
+#### Architecture
+
+CatBoost is a **sequential ensemble of shallow decision trees** (gradient boosting). Unlike Random Forest, each new tree is trained to correct the residual errors of the ensemble built so far. Categorical features are handled natively via **ordered target statistics**, so no one-hot encoding is needed.
+
+```
+Input: 50 raw features  (11 categorical marked as cat_features — NO one-hot)
+       │
+       ▼
+ ┌─────────────────────────────────────────────────────┐
+ │  Ordered target encoding for cat features (avoids leakage):  │
+ │  each category → running mean of target on prior rows          │
+ └─────────────────────────────────────────────────────┘
+       │
+       ▼
+  F_0(x) = base prediction (class priors)
+       │
+       ▼                                   ◀── iterate up to 2,500 rounds
+ ┌─────────────────────────────────────────────────────┐
+ │  Round t:                                                    │
+ │    1. Compute pseudo-residuals r_t = ∂L / ∂F_{t-1}            │
+ │    2. Fit oblivious tree h_t (depth 7) to r_t                 │
+ │    3. F_t = F_{t-1} + η · h_t       (learning rate η = 0.03)  │
+ │    4. L2 leaf regularization (λ = 9.0) shrinks leaf values    │
+ └─────────────────────────────────────────────────────┘
+       │
+       ▼
+  Early stopping triggers at iteration 181 (no val-loss improvement
+  for 150 rounds) → final ensemble = F_181 = sum of 181 trees
+       │
+       ▼
+  Softmax over per-class scores → buyer_profile prediction
+```
+
+**Why it works**: gradient boosting builds a powerful non-linear model by stacking many **weak learners** (shallow trees), each specializing on the mistakes of the previous ones. The combination of small learning rate, shallow trees, L2 leaf regularization, and early stopping keeps the model from overfitting even on only ~2,000 training rows.
