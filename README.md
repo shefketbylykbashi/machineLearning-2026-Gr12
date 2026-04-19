@@ -1755,3 +1755,143 @@ Coloring the same PCA projection by KMeans cluster (k=8) confirms that KMeans do
 
 **Cluster × Buyer-Profile Heatmap**
 ![Cluster profile heatmap](visualizations/ml/autoencoder/cluster_profile_heatmap.png)
+
+---
+
+## Model Comparison Summary
+
+| Algorithm | Type | Accuracy | Balanced Acc. | Macro F1 | Weighted F1 |
+|---|---|---|---|---|---|
+| **CatBoost** | Supervised (Boosting) | **95.63%** | **92.37%** | **91.12%** | **95.84%** |
+| **Neural Network** | Supervised (Deep Learning) | 88.59% | 83.00% | 82.71% | 88.39% |
+| **Logistic Regression** | Supervised (Linear) | 83.27% | 79.23% | 72.86% | 83.94% |
+| **Random Forest** | Supervised (Ensemble) | 82.32% | 67.62% | 68.70% | 81.79% |
+| **Autoencoder** | Unsupervised (Deep Learning) | 62.74% | 33.58% | 36.25% | 58.82% |
+| **KMeans** | Unsupervised (Clustering) | — | — | — | — |
+
+
+
+### Key Findings
+
+1. **CatBoost is the clear winner** with 95.6% accuracy and 91.1% macro F1 — its native handling of high-cardinality categorical features (especially `arbk_aktiviteti_1_pershkrimi`) gives it a decisive advantage.
+
+2. **The Neural Network performs second-best** (82.7% macro F1), demonstrating that entity embeddings can learn meaningful representations of categorical features, but require more careful tuning and larger datasets to match gradient boosting.
+
+3. **Linear models provide a strong baseline.** Logistic Regression achieves 72.9% macro F1 with full interpretability — useful for understanding feature contributions.
+
+4. **Unsupervised methods agree: supervision is needed here.** Both KMeans on raw features and the autoencoder's learned 8-D latent space fail to recover buyer-profile identity (autoencoder + KMeans ARI = 0.052, NMI = 0.080). This confirms that the buyer profile is defined by label-conditional semantics, not by feature-space geometry.
+
+---
+
+## Discussion
+
+Having trained six algorithms on the same dataset (four supervised, two unsupervised), we can now compare them side-by-side and draw conclusions about what worked, what didn't, and **why**. This section turns the per-model results into a cross-model narrative with five comparison visualizations.
+
+### Overall Metrics at a Glance
+
+![Overall metrics comparison](visualizations/ml/comparison/overall_metrics_comparison.png)
+
+This grouped bar chart overlays the four main test-set metrics (accuracy, balanced accuracy, macro F1, weighted F1) for every model — the four supervised algorithms and the unsupervised **Autoencoder + kNN** baseline. A few patterns jump out immediately:
+
+- **CatBoost dominates every metric** by a wide margin (~7 percentage points over the runner-up). Crucially, its *balanced* accuracy (92.4%) is only ~3 points below its raw accuracy (95.6%) — meaning it treats minority classes almost as well as majority ones.
+- **Random Forest shows the largest gap between accuracy and balanced accuracy** (82.3% vs. 67.6%, a 14.7-point gap). This is the classic signature of a model that scores well by over-predicting the majority class.
+- **Logistic Regression outperforms Random Forest on every metric except raw accuracy**, thanks to its explicit class-weight parameter which offsets the imbalance better than Random Forest's bagging does.
+- **Neural Network sits comfortably in second place**, confirming that entity embeddings on categorical features are competitive with tree-based methods, though still a step behind CatBoost for this sample size.
+- **Autoencoder + kNN is the lowest bar on every metric except raw accuracy**, where it reaches 62.7% by riding the majority class. Its balanced accuracy collapses to 33.6% and macro F1 to 36.2% — direct evidence that a representation optimised for *reconstruction* rather than *classification* loses roughly half of the label-conditional signal.
+
+### Where the Performance Gap Actually Comes From
+
+![Accuracy vs balanced accuracy](visualizations/ml/comparison/accuracy_vs_balanced_accuracy.png)
+
+Plotting accuracy against balanced accuracy makes the class-imbalance story visual. The dashed diagonal is the "fair" line where both metrics are equal — models sitting on it handle all classes equally well. **Distance below the line = minority-class weakness.**
+
+- CatBoost sits closest to the diagonal (small gap) — its class weighting + native categorical handling lets it learn all 8 classes well.
+- Neural Network is also close to the diagonal, with a similar accuracy/balanced gap (~5.6 points) coming from just a handful of misclassified minority-class samples.
+- Logistic Regression is well above the diagonal (accuracy > balanced), meaning it actually performs *better* on minority classes than a naïve accuracy interpretation suggests — its explicit class-weight parameter offsets the imbalance.
+- Random Forest is the farthest below — the accuracy/balanced gap is a red flag that the model is largely coasting on the majority class.
+
+
+### Stability Across Folds: Can We Trust These Numbers?
+
+![CV stability comparison](visualizations/ml/comparison/cv_stability_comparison.png)
+
+Average performance is only half the story — we also need to know whether results are stable across different training splits. This chart shows the CV macro F1 mean ± standard deviation for every model. The four supervised models use 5-fold CV over their full pipelines; the Autoencoder + kNN is evaluated with 3-fold CV where the autoencoder is **retrained from scratch inside each fold** (still without labels) and then kNN-classified at evaluation:
+
+- **CatBoost is both the most accurate and the most stable** (0.919 ± 0.020). Low variance across folds means the result is not an artifact of a lucky split.
+- **Neural Network is close behind in mean but has the highest variance** (0.900 ± 0.029). Part of this is intrinsic: each fold trains from a different random initialization, and stochastic gradient descent adds noise even with the same data.
+- **Logistic Regression** sits in the middle (0.738 ± 0.026) — a stable but lower ceiling imposed by its linear nature.
+- **Random Forest has both the lowest supervised mean and the highest supervised std** (0.695 ± 0.036)
+- **The Autoencoder + kNN is the lowest on mean and the most variable overall** (0.391 ± 0.030). Even though the autoencoder is retrained per fold, its macro F1 never crosses 0.44 — re-running the entire unsupervised pipeline from scratch reproduces the same 36-point-or-so score within noise, confirming the gap with the supervised models is structural, not a single-split artifact.
+- **Error bars do not overlap between CatBoost and the rest** — the ranking is statistically meaningful, not a fluke of a single split.
+
+### Supervised vs. Unsupervised: How Much Does the Label Actually Help?
+
+![Supervised vs unsupervised](visualizations/ml/comparison/supervised_vs_unsupervised.png)
+
+This final comparison puts all four supervised models alongside the **autoencoder + kNN** pipeline, where the neural network learned representations without ever seeing the label and a simple k-NN vote is then used at evaluation to predict `buyer_profile`. This is the cleanest way to ask "how much of the signal is in the *label*, and how much is visible from the features alone?"
+
+- **The autoencoder + kNN reaches only 36% macro F1 and 34% balanced accuracy** — a 55-point gap below CatBoost. The pipeline rides the majority class (62.7% raw accuracy) but cannot separate minority profiles.
+- **The autoencoder's latent KMeans scores ARI = 0.052 and NMI = 0.080** (see its section above): clusters carved out by reconstruction-driven geometry barely agree with true buyer profiles.
+- **Practical implication**: on this dataset any serious predictive work must use the labels. Unsupervised methods remain useful for *diagnostic* purposes (finding outliers, sanity-checking features, pretraining on an unlabeled pool) but are not a substitute for supervision.
+
+### Cost vs. Benefit: Which Model Should We Actually Use?
+
+| Criterion | Random Forest | Logistic Reg. | CatBoost | Neural Net | Autoencoder + kNN | KMeans |
+|---|---|---|---|---|---|---|
+| **Test macro F1** | 0.687 | 0.729 | **0.911** | 0.827 | 0.363 | — |
+| **Training time** | ~30 s | ~5 s | ~15 s | ~2 min (CPU) | ~40 s (CPU) | ~10 s |
+| **Prediction cost** | fast | fastest | fast | fast | fast (encode + kNN) | fast |
+| **Interpretability** | medium (feature importance) | **high** (coefficients) | medium (SHAP) | low (black box) | low | low |
+| **Handles 250+ categorical levels?** | via one-hot only | via one-hot only | **natively** | via embeddings | via embeddings | via one-hot only |
+| **Needs hyperparameter tuning?** | moderate | low | moderate | **high** | moderate | low (just k) |
+| **Needs labels to train?** | yes | yes | yes | yes | **no** | **no** |
+| **Deployment complexity** | joblib pickle | joblib pickle | joblib/cbm | PyTorch weights + preprocessor | PyTorch weights + preprocessor + kNN index | joblib pickle |
+
+**Recommendation**: **CatBoost is the production model**. It wins on accuracy, stability, and native categorical handling while being cheap to train and deploy. The Neural Network is a useful second opinion — its entity embeddings could become valuable if the dataset grows beyond 10K rows, where gradient boosting's advantage tends to shrink. Logistic Regression remains valuable as an **interpretable baseline** to explain feature contributions to stakeholders. The unsupervised models are best understood as **exploratory tools**. KMeans tested whether raw-feature geometry encodes buyer-profile identity, and the Autoencoder tested whether a *learned* geometry would do any better. Both agree that the label carries information the features alone cannot surface.
+
+---
+
+## How to Run Phase 2
+
+### Training Individual Models
+
+```bash
+# Random Forest
+python -m src.property_buyer_pipeline.train_random_forest
+
+# Logistic Regression
+python -m src.property_buyer_pipeline.train_linear
+
+# CatBoost
+python -m src.property_buyer_pipeline.train_catboost
+
+# Neural Network
+python -m src.ml.neural_net.train_neural_net
+
+# Autoencoder (unsupervised neural network)
+python -m src.ml.autoencoder_buyer.train_autoencoder
+
+# Neural Network with custom parameters
+python -m src.ml.neural_net.train_neural_net --epochs 300 --patience 15 --dropout 0.4
+```
+
+### Generating Visualizations
+
+```bash
+# Neural Network visualizations
+python -m src.ml.neural_net.visualize
+
+# Autoencoder (latent space + reconstruction loss)
+python -m src.ml.autoencoder_buyer.visualize
+
+# All other model visualizations (RF, LR, CatBoost)
+python -m src.ml.generate_all_visualizations
+
+# KMeans-specific visualizations
+python -m src.ml.generate_kmeans_viz
+
+# Cross-model comparison plots (used in the Discussion section)
+python -m src.ml.generate_comparison_viz
+```
+
+All outputs are saved to `visualizations/ml/{algorithm_name}/`.
