@@ -1,0 +1,457 @@
+{
+  "validation": {
+    "accuracy": 0.8575949367088608,
+    "balanced_accuracy": 0.7726267407365418,
+    "macro_f1": 0.7392543779173828,
+    "weighted_f1": 0.861908268598041,
+    "classification_report": {
+      "individual__commercial_services": {
+        "precision": 0.9607843137254902,
+        "recall": 0.9130434782608695,
+        "f1-score": 0.9363057324840764,
+        "support": 161.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.6666666666666666,
+        "support": 30.0
+      },
+      "individual__primary": {
+        "precision": 0.6111111111111112,
+        "recall": 0.8461538461538461,
+        "f1-score": 0.7096774193548387,
+        "support": 13.0
+      },
+      "individual__public_social": {
+        "precision": 0.375,
+        "recall": 0.6,
+        "f1-score": 0.46153846153846156,
+        "support": 5.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 16.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.8771929824561403,
+        "recall": 0.847457627118644,
+        "f1-score": 0.8620689655172413,
+        "support": 59.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.75,
+        "recall": 0.8076923076923077,
+        "f1-score": 0.7777777777777778,
+        "support": 26.0
+      },
+      "llc__primary": {
+        "precision": 0.5,
+        "recall": 0.5,
+        "f1-score": 0.5,
+        "support": 6.0
+      },
+      "accuracy": 0.8575949367088608,
+      "macro avg": {
+        "precision": 0.717594384244926,
+        "recall": 0.7726267407365418,
+        "f1-score": 0.7392543779173828,
+        "support": 316.0
+      },
+      "weighted avg": {
+        "precision": 0.8694940029087362,
+        "recall": 0.8575949367088608,
+        "f1-score": 0.861908268598041,
+        "support": 316.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        147,
+        6,
+        2,
+        4,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        3,
+        20,
+        3,
+        1,
+        0,
+        2,
+        1,
+        0
+      ],
+      [
+        1,
+        0,
+        11,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        1,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        50,
+        5,
+        2
+      ],
+      [
+        0,
+        3,
+        0,
+        0,
+        0,
+        2,
+        21,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        3
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.8326996197718631,
+    "balanced_accuracy": 0.7923456242166768,
+    "macro_f1": 0.7286036212467596,
+    "weighted_f1": 0.8393929619452749,
+    "classification_report": {
+      "individual__commercial_services": {
+        "precision": 0.9328358208955224,
+        "recall": 0.8896797153024911,
+        "f1-score": 0.9107468123861566,
+        "support": 281.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.75,
+        "recall": 0.6226415094339622,
+        "f1-score": 0.6804123711340206,
+        "support": 53.0
+      },
+      "individual__primary": {
+        "precision": 0.5,
+        "recall": 0.8333333333333334,
+        "f1-score": 0.625,
+        "support": 18.0
+      },
+      "individual__public_social": {
+        "precision": 0.3157894736842105,
+        "recall": 0.6,
+        "f1-score": 0.41379310344827586,
+        "support": 10.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 0.9523809523809523,
+        "f1-score": 0.975609756097561,
+        "support": 21.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.8333333333333334,
+        "recall": 0.7978723404255319,
+        "f1-score": 0.8152173913043478,
+        "support": 94.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.7674418604651163,
+        "recall": 0.7857142857142857,
+        "f1-score": 0.7764705882352941,
+        "support": 42.0
+      },
+      "llc__primary": {
+        "precision": 0.5,
+        "recall": 0.8571428571428571,
+        "f1-score": 0.631578947368421,
+        "support": 7.0
+      },
+      "accuracy": 0.8326996197718631,
+      "macro avg": {
+        "precision": 0.6999250610472729,
+        "recall": 0.7923456242166768,
+        "f1-score": 0.7286036212467596,
+        "support": 526.0
+      },
+      "weighted avg": {
+        "precision": 0.8538035206869811,
+        "recall": 0.8326996197718631,
+        "f1-score": 0.8393929619452749,
+        "support": 526.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        250,
+        9,
+        9,
+        6,
+        0,
+        7,
+        0,
+        0
+      ],
+      [
+        8,
+        33,
+        4,
+        4,
+        0,
+        1,
+        2,
+        1
+      ],
+      [
+        1,
+        0,
+        15,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        3,
+        1,
+        0,
+        6,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        20,
+        0,
+        0,
+        0
+      ],
+      [
+        6,
+        0,
+        2,
+        1,
+        0,
+        75,
+        7,
+        3
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        7,
+        33,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        6
+      ]
+    ]
+  },
+  "cv_summary": {
+    "accuracy": {
+      "mean": 0.8353987105531049,
+      "std": 0.01921386935630845,
+      "min": 0.8095238095238095,
+      "max": 0.8690476190476191
+    },
+    "balanced_accuracy": {
+      "mean": 0.7888300699587009,
+      "std": 0.03258905049960452,
+      "min": 0.7562622298472161,
+      "max": 0.8346729022306263
+    },
+    "macro_f1": {
+      "mean": 0.7375308710909272,
+      "std": 0.025666004807225837,
+      "min": 0.7110250010567274,
+      "max": 0.7818435788677527
+    },
+    "weighted_f1": {
+      "mean": 0.8437387692724583,
+      "std": 0.016794461144074426,
+      "min": 0.8229674002019267,
+      "max": 0.873563126853912
+    }
+  },
+  "top_25_feature_importance": [
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Ndërtimi i objekteve banesore dhe jobanesore",
+      "mean_abs_coefficient": 1.2701037073537762,
+      "max_abs_coefficient": 2.77270504636513
+    },
+    {
+      "feature": "num__arbk_aktiviteti_1_kodinace_is_outlier_iqr",
+      "mean_abs_coefficient": 1.0939475926763131,
+      "max_abs_coefficient": 1.7166290701917983
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Aktivitete tjera",
+      "mean_abs_coefficient": 1.0722262038688255,
+      "max_abs_coefficient": 4.274799512338373
+    },
+    {
+      "feature": "num__capital_to_sale_price_ratio_is_outlier_iqr",
+      "mean_abs_coefficient": 0.9941951296802163,
+      "max_abs_coefficient": 1.3922677597843407
+    },
+    {
+      "feature": "num__arbk_pronari_1_kapitali_is_outlier_iqr",
+      "mean_abs_coefficient": 0.8776157544992815,
+      "max_abs_coefficient": 1.2631439212862794
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Aktivitetet e dentistëve",
+      "mean_abs_coefficient": 0.8611635878966397,
+      "max_abs_coefficient": 3.444654351586557
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Aktivitetet e mjekësisë së specializuar",
+      "mean_abs_coefficient": 0.827982679700295,
+      "max_abs_coefficient": 3.311930718801181
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Kultivimi i drithërave (përveç orizit) i bimëve bishtajore dhe i farërave vajore",
+      "mean_abs_coefficient": 0.8256980724076939,
+      "max_abs_coefficient": 2.06401109273471
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Rritja e shpezëve",
+      "mean_abs_coefficient": 0.6962733272611101,
+      "max_abs_coefficient": 1.872763293408461
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_infrequent_sklearn",
+      "mean_abs_coefficient": 0.6871958998786798,
+      "max_abs_coefficient": 1.4733609767462565
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Ndërtimi i rrugëve dhe autostradave",
+      "mean_abs_coefficient": 0.6859998367421423,
+      "max_abs_coefficient": 1.5702686013222755
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_2_pershkrimi_Aktivitete tjera",
+      "mean_abs_coefficient": 0.6563972353777012,
+      "max_abs_coefficient": 1.0851168883854252
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Prodhimi i bukës simiteve dhe ëmbëlsirave të freskëta",
+      "mean_abs_coefficient": 0.625242128400257,
+      "max_abs_coefficient": 1.2915389125829506
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_2_pershkrimi_infrequent_sklearn",
+      "mean_abs_coefficient": 0.6107435886024897,
+      "max_abs_coefficient": 1.0120885633392227
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Kultivimi i perimeve pjepërave dhe shalqirit bimëve rrënjore dhe tuberoze",
+      "mean_abs_coefficient": 0.6089422472490612,
+      "max_abs_coefficient": 1.351639454568262
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Fermat e përziera",
+      "mean_abs_coefficient": 0.5654256167891814,
+      "max_abs_coefficient": 1.9375833979611237
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Përgatitja e vendpunishtes",
+      "mean_abs_coefficient": 0.5605261399902359,
+      "max_abs_coefficient": 1.3465184435852344
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Rritja e gjedheve për qumësht",
+      "mean_abs_coefficient": 0.5514306557466081,
+      "max_abs_coefficient": 2.2057226229864244
+    },
+    {
+      "feature": "cat__arbk_statusiarbk_Regjistruar",
+      "mean_abs_coefficient": 0.5189641675920212,
+      "max_abs_coefficient": 0.9388427928117413
+    },
+    {
+      "feature": "num__business_age_years_at_sale",
+      "mean_abs_coefficient": 0.5099367437429311,
+      "max_abs_coefficient": 0.6731470121342663
+    },
+    {
+      "feature": "num__business_age_days_at_sale",
+      "mean_abs_coefficient": 0.50993674374293,
+      "max_abs_coefficient": 0.6731470121342641
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Përpunimi dhe konservimi i mishit",
+      "mean_abs_coefficient": 0.5041726848655479,
+      "max_abs_coefficient": 1.3242896383073246
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Kulturat pyjore dhe aktivitetet e tjera të pylltarisë",
+      "mean_abs_coefficient": 0.4871180875184704,
+      "max_abs_coefficient": 1.9484723500738823
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Prodhimi i produkteve prej betonit për qëllime ndërtimi",
+      "mean_abs_coefficient": 0.4787986718391781,
+      "max_abs_coefficient": 1.0757603377119103
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Punime suvatimi",
+      "mean_abs_coefficient": 0.476663875439221,
+      "max_abs_coefficient": 1.2420647832343998
+    }
+  ]
+}

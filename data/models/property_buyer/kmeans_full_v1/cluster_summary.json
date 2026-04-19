@@ -1,0 +1,59 @@
+{
+  "cluster_0": {
+    "size": 11,
+    "top_reference_labels": {
+      "llc__commercial_services": 8,
+      "llc__industrial_ops": 3
+    },
+    "dominant_reference_label": "llc__commercial_services",
+    "dominant_reference_label_ratio": 0.7272727272727273
+  },
+  "cluster_1": {
+    "size": 571,
+    "top_reference_labels": {
+      "individual__commercial_services": 289,
+      "llc__commercial_services": 118,
+      "llc__industrial_ops": 49,
+      "individual__industrial_ops": 46,
+      "individual__primary": 30
+    },
+    "dominant_reference_label": "individual__commercial_services",
+    "dominant_reference_label_ratio": 0.5061295971978984
+  },
+  "cluster_2": {
+    "size": 723,
+    "top_reference_labels": {
+      "individual__commercial_services": 372,
+      "llc__commercial_services": 102,
+      "individual__industrial_ops": 65,
+      "llc__industrial_ops": 58,
+      "individual__primary": 46
+    },
+    "dominant_reference_label": "individual__commercial_services",
+    "dominant_reference_label_ratio": 0.5145228215767634
+  },
+  "cluster_3": {
+    "size": 396,
+    "top_reference_labels": {
+      "individual__commercial_services": 148,
+      "llc__commercial_services": 98,
+      "llc__industrial_ops": 65,
+      "individual__industrial_ops": 37,
+      "individual__unknown": 23
+    },
+    "dominant_reference_label": "individual__commercial_services",
+    "dominant_reference_label_ratio": 0.37373737373737376
+  },
+  "cluster_4": {
+    "size": 927,
+    "top_reference_labels": {
+      "individual__commercial_services": 544,
+      "llc__commercial_services": 158,
+      "individual__industrial_ops": 105,
+      "individual__unknown": 40,
+      "llc__industrial_ops": 38
+    },
+    "dominant_reference_label": "individual__commercial_services",
+    "dominant_reference_label_ratio": 0.5868392664509169
+  }
+}

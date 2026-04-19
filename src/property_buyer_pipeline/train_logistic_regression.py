@@ -27,11 +27,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
-# ============================================================
-# Configuration
-# ============================================================
-
-
 @dataclass(frozen=True)
 class TrainingConfig:
     project_root: Path = Path(__file__).resolve().parents[2]
@@ -42,11 +37,6 @@ class TrainingConfig:
     test_filename: str = "test_dataset_v1.0.xlsx"
 
     target_column: str = "buyer_profile"
-
-    # Modes:
-    # - property_only
-    # - property_plus_light_business
-    # - full
     feature_mode: str = "property_only"
 
     random_state: int = 42
@@ -56,20 +46,16 @@ class TrainingConfig:
 
     fill_missing_categorical_with: str = "__missing__"
     rare_category_threshold: int = 15
-    add_numeric_bins: bool = True
+    add_numeric_bins: bool = False
 
-    # Linear model params
+    penalty: str = "l2"
     C: float = 1.0
-    max_iter: int = 5000
-    solver: str = "saga"
+    max_iter: int = 4000
+    solver: str = "lbfgs"
+
     @property
     def output_dir(self) -> Path:
-        return self.output_root / f"linear_{self.feature_mode}_v1"
-
-
-# ============================================================
-# Logging
-# ============================================================
+        return self.output_root / f"logistic_regression_{self.feature_mode}_v1"
 
 
 def setup_logging() -> None:
@@ -80,19 +66,6 @@ def setup_logging() -> None:
 
 
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# Feature groups
-# ============================================================
-
-
-TARGET_LEAKAGE_COLUMNS = {
-    "buyer_profile",
-    "bleresi",
-    "arbk_pronari_1",
-    "emri_i_ndermarrjes_se_re_apo_asetit_ne_likuidim",
-}
 
 PROPERTY_CORE_FEATURES = [
     "rajoni_akp",
@@ -157,9 +130,7 @@ LIGHT_BUSINESS_FEATURES = [
 
 FULL_BUSINESS_FEATURES = [
     "arbk_statusiarbk",
-    "arbk_aktiviteti_1_kodinace",
     "arbk_aktiviteti_1_pershkrimi",
-    "arbk_aktiviteti_2_kodinace",
     "arbk_aktiviteti_2_pershkrimi",
     "arbk_pronari_1_kapitali",
     "arbk_pronari_1_kapitali_is_outlier_iqr",
@@ -168,11 +139,6 @@ FULL_BUSINESS_FEATURES = [
     "arbk_aktiviteti_2_kodinace_is_outlier_iqr",
     "arbk_aktiviteti_3_kodinace_is_outlier_iqr",
 ]
-
-
-# ============================================================
-# Utilities
-# ============================================================
 
 
 def ensure_output_dirs(cfg: TrainingConfig) -> None:
@@ -228,7 +194,7 @@ def get_feature_columns(df: pd.DataFrame, cfg: TrainingConfig) -> list[str]:
     seen: set[str] = set()
 
     for col in candidates:
-        if col in df.columns and col not in TARGET_LEAKAGE_COLUMNS and col not in seen:
+        if col in df.columns and col not in seen:
             selected.append(col)
             seen.add(col)
 
@@ -239,16 +205,12 @@ def get_feature_columns(df: pd.DataFrame, cfg: TrainingConfig) -> list[str]:
 
 
 def detect_categorical_columns(df: pd.DataFrame, feature_columns: list[str]) -> list[str]:
-    categorical_cols: list[str] = []
+    categorical_columns: list[str] = []
     for col in feature_columns:
         dtype = df[col].dtype
-        if (
-            is_object_dtype(df[col])
-            or isinstance(dtype, CategoricalDtype)
-            or is_string_dtype(dtype)
-        ):
-            categorical_cols.append(col)
-    return categorical_cols
+        if is_object_dtype(df[col]) or isinstance(dtype, CategoricalDtype) or is_string_dtype(dtype):
+            categorical_columns.append(col)
+    return categorical_columns
 
 
 def preprocess_features(
@@ -262,7 +224,7 @@ def preprocess_features(
     for col in categorical_columns:
         X[col] = X[col].astype("string").fillna(fill_missing_categorical_with)
 
-    numeric_columns = [c for c in feature_columns if c not in categorical_columns]
+    numeric_columns = [col for col in feature_columns if col not in categorical_columns]
     for col in numeric_columns:
         X[col] = pd.to_numeric(X[col], errors="coerce")
 
@@ -282,8 +244,7 @@ def filter_rare_target_classes(
     filtered_test = test_df[test_df[target_column].isin(valid_classes)].copy()
 
     logger.info(
-        "Rare-class filtering applied with min_class_count=%d. "
-        "Train: %d -> %d | Test: %d -> %d",
+        "Rare-class filtering applied with min_class_count=%d. Train: %d -> %d | Test: %d -> %d",
         min_class_count,
         len(train_df),
         len(filtered_train),
@@ -309,9 +270,9 @@ def collapse_rare_categories(
         train_df[col] = train_df[col].astype("string").fillna("__missing__")
         train_df[col] = train_df[col].where(train_df[col].isin(keep_values), "__rare__")
 
-        for df in transformed_others:
-            df[col] = df[col].astype("string").fillna("__missing__")
-            df[col] = df[col].where(df[col].isin(keep_values), "__rare__")
+        for other_df in transformed_others:
+            other_df[col] = other_df[col].astype("string").fillna("__missing__")
+            other_df[col] = other_df[col].where(other_df[col].isin(keep_values), "__rare__")
 
     return train_df, transformed_others
 
@@ -335,16 +296,14 @@ def add_binned_numeric_features(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         series = pd.to_numeric(df[col], errors="coerce")
-        non_null = series.dropna()
-
-        if non_null.nunique() < 8:
+        if series.dropna().nunique() < 8:
             continue
 
         try:
             binned = pd.qcut(series, q=6, duplicates="drop")
             df[f"{col}_bin"] = binned.astype("string").fillna("__missing__")
         except Exception:
-            pass
+            continue
 
     return df
 
@@ -364,19 +323,18 @@ def evaluate_predictions(y_true: pd.Series, y_pred: np.ndarray) -> dict[str, Any
 
 
 def summarize_cv_results(cv_results: list[dict[str, Any]]) -> dict[str, Any]:
-    def metric_values(name: str) -> list[float]:
-        return [float(r[name]) for r in cv_results if r[name] is not None]
+    def metric_values(metric_name: str) -> list[float]:
+        return [float(result[metric_name]) for result in cv_results if result[metric_name] is not None]
 
     summary: dict[str, Any] = {}
-    for metric in ["accuracy", "balanced_accuracy", "macro_f1", "weighted_f1"]:
-        values = metric_values(metric)
-        summary[metric] = {
+    for metric_name in ["accuracy", "balanced_accuracy", "macro_f1", "weighted_f1"]:
+        values = metric_values(metric_name)
+        summary[metric_name] = {
             "mean": safe_float(np.mean(values)) if values else None,
             "std": safe_float(np.std(values)) if values else None,
             "min": safe_float(np.min(values)) if values else None,
             "max": safe_float(np.max(values)) if values else None,
         }
-
     return summary
 
 
@@ -407,13 +365,17 @@ def build_pipeline(
         remainder="drop",
     )
 
-    model = LogisticRegression(
-        C=cfg.C,
-        class_weight="balanced",
-        max_iter=cfg.max_iter,
-        random_state=cfg.random_state,
-        solver=cfg.solver,
-    )
+    model_kwargs: dict[str, Any] = {
+        "C": cfg.C,
+        "class_weight": "balanced",
+        "max_iter": cfg.max_iter,
+        "random_state": cfg.random_state,
+        "solver": cfg.solver,
+    }
+    if cfg.penalty != "l2":
+        model_kwargs["penalty"] = cfg.penalty
+
+    model = LogisticRegression(**model_kwargs)
 
     return Pipeline(
         steps=[
@@ -430,21 +392,19 @@ def extract_feature_importance(pipeline: Pipeline, output_path: Path) -> pd.Data
     try:
         feature_names = preprocessor.get_feature_names_out()
     except Exception:
-        feature_names = np.array([f"feature_{i}" for i in range(model.coef_.shape[1])])
+        feature_names = np.array([f"feature_{idx}" for idx in range(model.coef_.shape[1])])
 
-    mean_abs_coefs = np.abs(model.coef_).mean(axis=0)
-    max_abs_coefs = np.abs(model.coef_).max(axis=0)
-
-    df_imp = pd.DataFrame(
+    coef_abs = np.abs(model.coef_)
+    feature_importance_df = pd.DataFrame(
         {
             "feature": feature_names,
-            "mean_abs_coefficient": mean_abs_coefs,
-            "max_abs_coefficient": max_abs_coefs,
+            "mean_abs_coefficient": coef_abs.mean(axis=0),
+            "max_abs_coefficient": coef_abs.max(axis=0),
         }
     ).sort_values("mean_abs_coefficient", ascending=False)
 
-    df_imp.to_csv(output_path, index=False, encoding="utf-8")
-    return df_imp
+    feature_importance_df.to_csv(output_path, index=False, encoding="utf-8")
+    return feature_importance_df
 
 
 def run_cross_validation(
@@ -469,24 +429,14 @@ def run_cross_validation(
         X_valid_fold = X.iloc[valid_idx].copy()
         y_valid_fold = y.iloc[valid_idx].copy()
 
-        X_train_fold, [X_valid_fold] = collapse_rare_categories(
-            train_df=X_train_fold,
-            other_dfs=[X_valid_fold],
-            categorical_columns=categorical_columns,
-            threshold=cfg.rare_category_threshold,
-        )
-
-        if cfg.add_numeric_bins:
-            X_train_fold = add_binned_numeric_features(X_train_fold)
-            X_valid_fold = add_binned_numeric_features(X_valid_fold)
-
         fold_categorical_columns = [
-            c for c in X_train_fold.columns
-            if is_object_dtype(X_train_fold[c])
-            or isinstance(X_train_fold[c].dtype, CategoricalDtype)
-            or str(X_train_fold[c].dtype) == "string"
+            col
+            for col in X_train_fold.columns
+            if is_object_dtype(X_train_fold[col])
+            or isinstance(X_train_fold[col].dtype, CategoricalDtype)
+            or is_string_dtype(X_train_fold[col].dtype)
         ]
-        fold_numeric_columns = [c for c in X_train_fold.columns if c not in fold_categorical_columns]
+        fold_numeric_columns = [col for col in X_train_fold.columns if col not in fold_categorical_columns]
 
         pipeline = build_pipeline(fold_categorical_columns, fold_numeric_columns, cfg)
         pipeline.fit(X_train_fold, y_train_fold)
@@ -494,21 +444,15 @@ def run_cross_validation(
         y_valid_pred = pipeline.predict(X_valid_fold)
         fold_metrics = evaluate_predictions(y_valid_fold, y_valid_pred)
 
-        fold_result = {
-            "fold": fold_idx,
-            "accuracy": fold_metrics["accuracy"],
-            "balanced_accuracy": fold_metrics["balanced_accuracy"],
-            "macro_f1": fold_metrics["macro_f1"],
-            "weighted_f1": fold_metrics["weighted_f1"],
-            "n_iter_max": int(np.max(pipeline.named_steps["model"].n_iter_)),
-        }
-        cv_results.append(fold_result)
-
-        logger.info(
-            "Fold %d | macro_f1=%.4f | balanced_accuracy=%.4f",
-            fold_idx,
-            fold_result["macro_f1"],
-            fold_result["balanced_accuracy"],
+        cv_results.append(
+            {
+                "fold": fold_idx,
+                "accuracy": fold_metrics["accuracy"],
+                "balanced_accuracy": fold_metrics["balanced_accuracy"],
+                "macro_f1": fold_metrics["macro_f1"],
+                "weighted_f1": fold_metrics["weighted_f1"],
+                "n_iter_max": int(np.max(pipeline.named_steps["model"].n_iter_)),
+            }
         )
 
     return cv_results
@@ -524,16 +468,19 @@ def main() -> None:
         default="property_only",
         choices=["property_only", "property_plus_light_business", "full"],
     )
+    parser.add_argument("--C", type=float, default=1.0)
+    parser.add_argument("--max-iter", type=int, default=8000)
     args = parser.parse_args()
 
-    cfg = TrainingConfig(feature_mode=args.feature_mode)
+    cfg = TrainingConfig(
+        feature_mode=args.feature_mode,
+        C=args.C,
+        max_iter=args.max_iter,
+    )
     ensure_output_dirs(cfg)
 
-    train_path = cfg.data_dir / cfg.train_filename
-    test_path = cfg.data_dir / cfg.test_filename
-
-    train_df = load_excel(train_path)
-    test_df = load_excel(test_path)
+    train_df = load_excel(cfg.data_dir / cfg.train_filename)
+    test_df = load_excel(cfg.data_dir / cfg.test_filename)
 
     logger.info("Initial train shape: %s", train_df.shape)
     logger.info("Initial test shape: %s", test_df.shape)
@@ -593,49 +540,39 @@ def main() -> None:
         stratify=y_train_all,
     )
 
-    X_train, [X_valid, X_test] = collapse_rare_categories(
-        train_df=X_train,
-        other_dfs=[X_valid, X_test],
-        categorical_columns=categorical_columns,
-        threshold=cfg.rare_category_threshold,
-    )
-
-    if cfg.add_numeric_bins:
-        X_train = add_binned_numeric_features(X_train)
-        X_valid = add_binned_numeric_features(X_valid)
-        X_test = add_binned_numeric_features(X_test)
-
     final_categorical_columns = [
-        c for c in X_train.columns
-        if is_object_dtype(X_train[c])
-        or isinstance(X_train[c].dtype, CategoricalDtype)
-        or str(X_train[c].dtype) == "string"
+        col
+        for col in X_train.columns
+        if is_object_dtype(X_train[col])
+        or isinstance(X_train[col].dtype, CategoricalDtype)
+        or is_string_dtype(X_train[col].dtype)
     ]
-    final_numeric_columns = [c for c in X_train.columns if c not in final_categorical_columns]
+    final_numeric_columns = [col for col in X_train.columns if col not in final_categorical_columns]
 
-    logger.info("Training linear multinomial classifier...")
+    logger.info("Training multinomial logistic regression...")
     pipeline = build_pipeline(final_categorical_columns, final_numeric_columns, cfg)
     pipeline.fit(X_train, y_train)
 
     y_valid_pred = pipeline.predict(X_valid)
     y_test_pred = pipeline.predict(X_test)
     y_test_proba = pipeline.predict_proba(X_test)
-    prediction_confidence = y_test_proba.max(axis=1)
 
     valid_metrics = evaluate_predictions(y_valid, y_valid_pred)
     test_metrics = evaluate_predictions(y_test, y_test_pred)
+    feature_importance_df = extract_feature_importance(
+        pipeline,
+        cfg.output_dir / "feature_importance.csv",
+    )
 
-    model_path = cfg.output_dir / "buyer_profile_linear_pipeline.joblib"
-    bundle_path = cfg.output_dir / "buyer_profile_linear_bundle.joblib"
+    model_path = cfg.output_dir / "buyer_profile_logistic_regression_pipeline.joblib"
+    bundle_path = cfg.output_dir / "buyer_profile_logistic_regression_bundle.joblib"
     metrics_path = cfg.output_dir / "metrics.json"
     cv_results_path = cfg.output_dir / "cv_results.json"
     metadata_path = cfg.output_dir / "training_metadata.json"
-    feature_importance_path = cfg.output_dir / "feature_importance.csv"
     valid_predictions_path = cfg.output_dir / "validation_predictions.csv"
     test_predictions_path = cfg.output_dir / "test_predictions.csv"
 
     joblib.dump(pipeline, model_path)
-    feature_importance_df = extract_feature_importance(pipeline, feature_importance_path)
 
     valid_predictions_df = X_valid.copy()
     valid_predictions_df[cfg.target_column] = y_valid.values
@@ -648,7 +585,7 @@ def main() -> None:
     test_predictions_df = X_test.copy()
     test_predictions_df[cfg.target_column] = y_test.values
     test_predictions_df["predicted_buyer_profile"] = y_test_pred
-    test_predictions_df["prediction_confidence"] = prediction_confidence
+    test_predictions_df["prediction_confidence"] = y_test_proba.max(axis=1)
     test_predictions_df["is_correct"] = (
         test_predictions_df[cfg.target_column] == test_predictions_df["predicted_buyer_profile"]
     )
@@ -684,8 +621,8 @@ def main() -> None:
                 "output_dir": str(cfg.output_dir),
             },
             "selected_feature_columns": feature_columns,
-            "final_categorical_columns": final_categorical_columns,
-            "final_numeric_columns": final_numeric_columns,
+            "categorical_columns": final_categorical_columns,
+            "numeric_columns": final_numeric_columns,
             "n_train_rows": int(len(train_df)),
             "n_test_rows": int(len(test_df)),
             "n_classes_train": int(y_train_all.nunique()),
@@ -699,8 +636,8 @@ def main() -> None:
             "model_path": str(model_path),
             "feature_mode": cfg.feature_mode,
             "feature_columns": feature_columns,
-            "final_categorical_columns": final_categorical_columns,
-            "final_numeric_columns": final_numeric_columns,
+            "categorical_columns": final_categorical_columns,
+            "numeric_columns": final_numeric_columns,
             "target_column": cfg.target_column,
             "add_numeric_bins": cfg.add_numeric_bins,
             "rare_category_threshold": cfg.rare_category_threshold,
@@ -709,7 +646,8 @@ def main() -> None:
     )
 
     logger.info("Artifacts saved to: %s", cfg.output_dir)
-    logger.info("Training completed successfully.")
+    logger.info("Validation macro-F1: %.4f", valid_metrics["macro_f1"])
+    logger.info("Test macro-F1: %.4f", test_metrics["macro_f1"])
 
 
 if __name__ == "__main__":
