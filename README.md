@@ -1528,3 +1528,107 @@ The 5-fold CV shows meaningful variability — macro F1 ranges from 0.859 (Fold 
 ![Neural Net Val vs Test](visualizations/ml/neural_net/validation_vs_test.png)
 
 There is a noticeable gap between validation macro F1 (83.4%) and test macro F1 (82.7%), both lower than the CV average (90.0%). This gap between CV and holdout performance suggests the neural network benefits from the larger effective training sets in CV (80% × 2102 = 1682 per fold) compared to the final model's training subset (85% × 2102 = 1787 minus the validation split).
+
+
+---
+
+## Unsupervised Algorithms
+
+### 5. KMeans Clustering
+
+**Source**: `src/property_buyer_pipeline/train_kmeans.py`
+**Output**: `data/models/property_buyer/kmeans_full_v1/`
+
+#### Algorithm Description
+
+KMeans is an **unsupervised** algorithm that partitions the dataset into *k* groups (clusters) by iteratively:
+1. Assigning each data point to the nearest cluster centroid
+2. Recomputing centroids as the mean of all points in each cluster
+
+Unlike supervised models, KMeans has **no access to the target labels** during training. It discovers structure purely from feature similarity. The goal is to evaluate whether natural groupings in the data align with the known buyer profiles.
+
+Two metrics guide the selection of *k*:
+- **Elbow Method** (inertia): measures within-cluster compactness — look for the "elbow" where adding more clusters yields diminishing returns
+- **Silhouette Score**: measures how similar each point is to its own cluster vs. neighboring clusters (range: -1 to 1, higher is better)
+
+#### Configuration
+- **k range evaluated**: 3–10
+- **Selected k**: 5 (highest silhouette score)
+- **n_init**: 20 (random restarts to avoid local minima)
+- **Max Iterations**: 500
+- **Features**: 50 features (11 categorical one-hot encoded → 438 transformed features)
+
+#### Results
+
+| Metric | Value |
+|---|---|
+| Silhouette Score | 0.188 |
+| Calinski-Harabasz Score | 272.53 |
+| Davies-Bouldin Score | 1.89 |
+| Inertia | 87,687 |
+
+#### Analysis
+
+The low silhouette score (0.188) indicates that the clusters are **not well-separated** — data points are often roughly equidistant between cluster boundaries. This is expected because:
+1. The buyer profiles are defined by **business-type semantics** (LLC vs. individual, sector), not geometric distance in feature space
+2. One-hot encoding of 250+ business activities creates a very high-dimensional sparse space where distance-based clustering is less effective
+3. The dominant cluster pattern reflects **price/area scales** rather than buyer-type distinctions
+
+The cluster-to-profile heatmap confirms that most clusters are dominated by `individual__commercial_services` (the majority class), with limited separation between profiles. This validates the choice of supervised methods as the primary prediction approach.
+
+#### Visualizations
+
+**Cluster Selection: Elbow & Silhouette**
+![KMeans Cluster Selection](visualizations/ml/kmeans/cluster_selection_metrics.png)
+
+The left plot (Elbow Method) shows inertia decreasing steadily from k=3 to k=10 with no sharp "elbow" — indicating there is no clearly optimal number of clusters in this dataset. The right plot (Silhouette Score) shows k=5 achieves the highest silhouette score (0.188), though all values remain below 0.20, indicating weak cluster structure overall. The flatness of both curves suggests the data does not contain well-defined natural groupings.
+
+**Cluster Sizes**
+![KMeans Cluster Sizes](visualizations/ml/kmeans/cluster_sizes.png)
+
+The 5 clusters are highly uneven: Cluster 2 (723 samples) and Cluster 1 (571 samples) dominate, while Cluster 0 contains only 11 samples. This extreme imbalance suggests Cluster 0 captures a small set of outliers (likely high-capital LLCs), while the large clusters blend multiple buyer profiles together.
+
+**Buyer Profile Distribution per Cluster**
+![KMeans Profile Heatmap](visualizations/ml/kmeans/cluster_profile_heatmap.png)
+
+The heatmap confirms that clusters do not map cleanly to buyer profiles. Every large cluster (1–4) is dominated by `individual__commercial_services` (the majority class), with 40–51% representation. No cluster achieves strong purity for any minority class. Only Cluster 0 (11 samples) is dominated by `llc__commercial_services` at 73%, but this cluster is too small to be useful. This validates that buyer profiles are defined by **business semantics** rather than the feature-space geometry that KMeans relies on.
+
+#### Architecture
+
+KMeans is an **iterative geometric partitioning algorithm**. It repeatedly alternates between assigning points to their nearest centroid and moving each centroid to the mean of its assigned points, minimizing the total squared distance (inertia) between points and their cluster centers.
+
+```
+Input: 50 raw features (11 categorical → OneHotEncoded → ~438 transformed dims)
+       │
+       ▼
+ ┌────────────────────────────────────────────────┐
+ │ Preprocessing                                           │
+ │   • Numeric    → StandardScaler (mean 0, std 1)         │
+ │   • Categorical → OneHotEncoder                          │
+ └─────────────────────────────────────────────────┘
+       │                      ◀── try k ∈ {3, 4, 5, ..., 10}
+       ▼                           select k with highest silhouette
+ ┌─────────────────────────────────────────────────┐
+ │ For k = 5 (selected):                                   │
+ │   Repeat 20 times with different random seeds (n_init): │
+ │                                                         │
+ │   1. Init centroids μ_1 .. μ_5 (k-means++ seeding)       │
+ │   2. ASSIGN:   c_i = argmin_k || x_i − μ_k ||²            │
+ │   3. UPDATE:   μ_k = mean of all x_i with c_i = k         │
+ │   4. Repeat 2–3 until assignments stable (max 500 iters) │
+ │                                                         │
+ │   Keep the run with lowest inertia.                     │
+ └──────────────────────────────────────────────────┘
+       │
+       ▼
+  5 centroids + cluster label c_i ∈ {0..4} for every point
+       │
+       ▼
+  Evaluation (no training labels used):
+    • Silhouette score   (cohesion vs. separation)
+    • Calinski-Harabasz (between- vs. within-cluster variance)
+    • Davies-Bouldin    (average cluster similarity)
+    • Cluster × buyer_profile contingency heatmap (post-hoc)
+```
+
+**Why it works on some datasets**: when clusters are roughly spherical and well-separated in Euclidean space, the iterative assign/update loop converges to meaningful groupings. **Why it doesn't work well here**: buyer profiles are defined by **categorical semantics** (entity type, business sector), which one-hot encoding spreads across hundreds of sparse binary dimensions. Euclidean distance in that space mostly reflects property price/area scale rather than buyer identity — so the geometry KMeans optimizes doesn't align with the semantic grouping we care about.
