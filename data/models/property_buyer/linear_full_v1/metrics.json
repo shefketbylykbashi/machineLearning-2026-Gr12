@@ -1,0 +1,681 @@
+{
+  "validation": {
+    "accuracy": 0.6987577639751553,
+    "balanced_accuracy": 0.6962781758471414,
+    "macro_f1": 0.5261033267566082,
+    "weighted_f1": 0.737062651786603,
+    "classification_report": {
+      "corporation__commercial_services": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1-score": 0.6666666666666666,
+        "support": 1.0
+      },
+      "individual__commercial_services": {
+        "precision": 0.9734513274336283,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.7913669064748201,
+        "support": 165.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.46808510638297873,
+        "recall": 0.6875,
+        "f1-score": 0.5569620253164557,
+        "support": 32.0
+      },
+      "individual__primary": {
+        "precision": 0.631578947368421,
+        "recall": 1.0,
+        "f1-score": 0.7741935483870968,
+        "support": 12.0
+      },
+      "individual__public_social": {
+        "precision": 0.15384615384615385,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.25,
+        "support": 6.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 0.9285714285714286,
+        "f1-score": 0.9629629629629629,
+        "support": 14.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.7843137254901961,
+        "recall": 0.6896551724137931,
+        "f1-score": 0.7339449541284404,
+        "support": 58.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.72,
+        "recall": 0.72,
+        "f1-score": 0.72,
+        "support": 25.0
+      },
+      "llc__primary": {
+        "precision": 0.4444444444444444,
+        "recall": 0.8,
+        "f1-score": 0.5714285714285714,
+        "support": 5.0
+      },
+      "llc__public_social": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+      },
+      "llc__unknown": {
+        "precision": 0.2,
+        "recall": 0.5,
+        "f1-score": 0.2857142857142857,
+        "support": 2.0
+      },
+      "partnership__industrial_ops": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 0.0
+      },
+      "accuracy": 0.6987577639751553,
+      "macro avg": {
+        "precision": 0.4896433087471519,
+        "recall": 0.6382549945265462,
+        "f1-score": 0.5261033267566082,
+        "support": 322.0
+      },
+      "weighted avg": {
+        "precision": 0.8220889286427191,
+        "recall": 0.6987577639751553,
+        "f1-score": 0.737062651786603,
+        "support": 322.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        110,
+        23,
+        0,
+        20,
+        0,
+        11,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        22,
+        7,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        40,
+        6,
+        1,
+        8,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        18,
+        2,
+        0,
+        4,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        4,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.7392120075046904,
+    "balanced_accuracy": 0.7638205155098787,
+    "macro_f1": 0.5940161947292132,
+    "weighted_f1": 0.7710657378876808,
+    "classification_report": {
+      "corporation__commercial_services": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1-score": 0.6666666666666666,
+        "support": 2.0
+      },
+      "individual__commercial_services": {
+        "precision": 0.9890710382513661,
+        "recall": 0.70703125,
+        "f1-score": 0.8246013667425968,
+        "support": 256.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.4090909090909091,
+        "recall": 0.6585365853658537,
+        "f1-score": 0.5046728971962616,
+        "support": 41.0
+      },
+      "individual__primary": {
+        "precision": 0.5789473684210527,
+        "recall": 1.0,
+        "f1-score": 0.7333333333333333,
+        "support": 22.0
+      },
+      "individual__public_social": {
+        "precision": 0.1891891891891892,
+        "recall": 1.0,
+        "f1-score": 0.3181818181818182,
+        "support": 7.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 0.9090909090909091,
+        "f1-score": 0.9523809523809523,
+        "support": 33.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.8554216867469879,
+        "recall": 0.7319587628865979,
+        "f1-score": 0.7888888888888889,
+        "support": 97.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.7346938775510204,
+        "recall": 0.7346938775510204,
+        "f1-score": 0.7346938775510204,
+        "support": 49.0
+      },
+      "llc__primary": {
+        "precision": 0.7333333333333333,
+        "recall": 0.7857142857142857,
+        "f1-score": 0.7586206896551724,
+        "support": 14.0
+      },
+      "llc__public_social": {
+        "precision": 0.2777777777777778,
+        "recall": 0.625,
+        "f1-score": 0.38461538461538464,
+        "support": 8.0
+      },
+      "llc__unknown": {
+        "precision": 0.3333333333333333,
+        "recall": 0.75,
+        "f1-score": 0.46153846153846156,
+        "support": 4.0
+      },
+      "partnership__industrial_ops": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 0.0
+      },
+      "accuracy": 0.7392120075046904,
+      "macro avg": {
+        "precision": 0.5917382094745808,
+        "recall": 0.7001688058840555,
+        "f1-score": 0.5940161947292132,
+        "support": 533.0
+      },
+      "weighted avg": {
+        "precision": 0.847718959345862,
+        "recall": 0.7392120075046904,
+        "f1-score": 0.7710657378876808,
+        "support": 533.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        181,
+        34,
+        0,
+        27,
+        0,
+        8,
+        1,
+        0,
+        3,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        27,
+        11,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        22,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        2,
+        0,
+        30,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        2,
+        0,
+        71,
+        9,
+        0,
+        10,
+        2,
+        1
+      ],
+      [
+        0,
+        0,
+        4,
+        2,
+        0,
+        0,
+        1,
+        36,
+        4,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        11,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        0,
+        5,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        3,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "cv_summary": {
+    "accuracy": {
+      "mean": 0.7181556760996013,
+      "std": 0.030152640652965974,
+      "min": 0.6752336448598131,
+      "max": 0.7686915887850467
+    },
+    "balanced_accuracy": {
+      "mean": 0.6846801201175484,
+      "std": 0.04414167142664711,
+      "min": 0.5988594444370771,
+      "max": 0.7242061245797236
+    },
+    "macro_f1": {
+      "mean": 0.5481926239227471,
+      "std": 0.05222780491025197,
+      "min": 0.48856373468983505,
+      "max": 0.6403923242040778
+    },
+    "weighted_f1": {
+      "mean": 0.751255953955326,
+      "std": 0.02533721100702491,
+      "min": 0.715783530031145,
+      "max": 0.7932909953928022
+    }
+  },
+  "top_25_feature_importance": [
+    {
+      "feature": "num__arbk_aktiviteti_1_kodinace",
+      "mean_abs_coefficient": 1.9859664489834845,
+      "max_abs_coefficient": 4.037767898580531
+    },
+    {
+      "feature": "num__capital_to_sale_price_ratio_is_outlier_iqr",
+      "mean_abs_coefficient": 0.9399901100414451,
+      "max_abs_coefficient": 1.3984867212488248
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Ndërtimi i objekteve banesore dhe jobanesore",
+      "mean_abs_coefficient": 0.8114313473066574,
+      "max_abs_coefficient": 2.2786913889996776
+    },
+    {
+      "feature": "num__arbk_pronari_1_kapitali_is_outlier_iqr",
+      "mean_abs_coefficient": 0.798508940185326,
+      "max_abs_coefficient": 1.2387029852779272
+    },
+    {
+      "feature": "num__arbk_aktiviteti_1_kodinace_is_outlier_iqr",
+      "mean_abs_coefficient": 0.697310025129488,
+      "max_abs_coefficient": 1.427490144990487
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi___rare__",
+      "mean_abs_coefficient": 0.6141470035455708,
+      "max_abs_coefficient": 1.2694154126314647
+    },
+    {
+      "feature": "num__arbk_numripunetoreve",
+      "mean_abs_coefficient": 0.5131963267748652,
+      "max_abs_coefficient": 1.1447444245043772
+    },
+    {
+      "feature": "num__arbk_kapitali_was_missing",
+      "mean_abs_coefficient": 0.4673345439556235,
+      "max_abs_coefficient": 0.9461547560660919
+    },
+    {
+      "feature": "num__arbk_aktiviteti_2_kodinace",
+      "mean_abs_coefficient": 0.46127758680896314,
+      "max_abs_coefficient": 1.4081918254497399
+    },
+    {
+      "feature": "cat__arbk_statusiarbk_Pasiv-09/06/2022",
+      "mean_abs_coefficient": 0.4577859668105239,
+      "max_abs_coefficient": 0.8380703087657281
+    },
+    {
+      "feature": "cat__zona_kadastrale___rare__",
+      "mean_abs_coefficient": 0.41239127130402503,
+      "max_abs_coefficient": 0.9774831454039393
+    },
+    {
+      "feature": "cat__arbk_statusiarbk_Regjistruar",
+      "mean_abs_coefficient": 0.4113031012755796,
+      "max_abs_coefficient": 0.6925929331803083
+    },
+    {
+      "feature": "num__business_age_years_at_sale",
+      "mean_abs_coefficient": 0.41081501849784496,
+      "max_abs_coefficient": 0.8829605459590847
+    },
+    {
+      "feature": "num__business_age_days_at_sale",
+      "mean_abs_coefficient": 0.41081501849783947,
+      "max_abs_coefficient": 0.8829605459590737
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_1_pershkrimi_Aktivitete tjera",
+      "mean_abs_coefficient": 0.37849432416257095,
+      "max_abs_coefficient": 1.7051182960400892
+    },
+    {
+      "feature": "cat__qytet_apo_fshat_lokacioni_i_asetit_te_shitur_Qytet",
+      "mean_abs_coefficient": 0.3673951275574104,
+      "max_abs_coefficient": 1.119142008937256
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_2_pershkrimi___rare__",
+      "mean_abs_coefficient": 0.35555348682020843,
+      "max_abs_coefficient": 0.7969722571804493
+    },
+    {
+      "feature": "cat__eshte_shitur_si_ndermarrje_e_re_apo_aset_ne_likuidim_Aset në likuidim",
+      "mean_abs_coefficient": 0.34784843816113575,
+      "max_abs_coefficient": 0.8986677654413866
+    },
+    {
+      "feature": "cat__arbk_aktiviteti_2_pershkrimi_Aktivitete tjera",
+      "mean_abs_coefficient": 0.3476895459749409,
+      "max_abs_coefficient": 0.8782450750326259
+    },
+    {
+      "feature": "cat__menyra_e_shitjes_spin off i rregullt",
+      "mean_abs_coefficient": 0.34013392517576163,
+      "max_abs_coefficient": 0.6212749259332812
+    },
+    {
+      "feature": "cat__komuna_lokacioni_i_asetit_te_shitur_Gjakovë",
+      "mean_abs_coefficient": 0.3350451473422276,
+      "max_abs_coefficient": 0.8910529043834401
+    },
+    {
+      "feature": "num__contract_month",
+      "mean_abs_coefficient": 0.33385122935173533,
+      "max_abs_coefficient": 0.9413534515699017
+    },
+    {
+      "feature": "cat__total_area_m2_bin_(90.907, 448.4]",
+      "mean_abs_coefficient": 0.33074996730353307,
+      "max_abs_coefficient": 0.6038572355173486
+    },
+    {
+      "feature": "cat__rajoni_akp_Prizren",
+      "mean_abs_coefficient": 0.32859871927692513,
+      "max_abs_coefficient": 0.7731554868113616
+    },
+    {
+      "feature": "cat__kategoria_e_asetit_depo",
+      "mean_abs_coefficient": 0.3228566137994402,
+      "max_abs_coefficient": 0.6939104338891311
+    }
+  ]
+}
