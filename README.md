@@ -1,6 +1,6 @@
 <table border="0">
  <tr>
-    <td><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/University_of_Prishtina_logo.svg/1200px-University_of_Prishtina_logo.svg.png" width="150" alt="University Logo" /></td>
+    <td><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/University_of_Prishtina_logo.svg/500px-University_of_Prishtina_logo.svg.png" width="150" alt="University Logo" /></td>
     <td>
       <p>University of Pristina</p>
       <p>Faculty of Electrical and Computer Engineering</p>
