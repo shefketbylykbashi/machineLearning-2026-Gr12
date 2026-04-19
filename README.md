@@ -1632,3 +1632,126 @@ Input: 50 raw features (11 categorical → OneHotEncoded → ~438 transformed di
 ```
 
 **Why it works on some datasets**: when clusters are roughly spherical and well-separated in Euclidean space, the iterative assign/update loop converges to meaningful groupings. **Why it doesn't work well here**: buyer profiles are defined by **categorical semantics** (entity type, business sector), which one-hot encoding spreads across hundreds of sparse binary dimensions. Euclidean distance in that space mostly reflects property price/area scale rather than buyer identity — so the geometry KMeans optimizes doesn't align with the semantic grouping we care about.
+
+---
+
+### 6. Autoencoder (Unsupervised Neural Network)
+
+**Source**: `src/ml/autoencoder_buyer/train_autoencoder.py`
+**Output**: `data/models/autoencoder/`
+
+#### Algorithm Description
+
+An **autoencoder** is an unsupervised neural network that learns to compress each input row into a small **latent vector** and then reconstruct the original row from that vector. Because the bottleneck is narrower than the input, the network is forced to discover a compact representation that captures the most informative structure in the data.
+
+Key points for this dataset:
+
+- **Entity embeddings** handle the 11 high-cardinality categorical features (same trick as the supervised neural network): each category is mapped to a dense learnable vector rather than a one-hot column.
+- **Mixed reconstruction loss** — the decoder has two heads: an MSE head that predicts the 41 scaled numeric features, and 11 softmax heads that predict each categorical column. Total loss = MSE(numeric) + mean cross-entropy(categorical).
+- **No labels are used during training.** The `buyer_profile` column is only consulted after training to score how useful the learned latent space is.
+
+After training we evaluate the latent space in two label-aware ways (labels used only for scoring):
+
+1. **KMeans clustering on the latent space** — do natural clusters in the 8-D latent space correspond to buyer profiles? Scored with silhouette, plus **ARI** and **NMI** against the true labels.
+2. **k-NN classification in the latent space** — if we do a nearest-neighbor vote using the learned latent vectors, how well can we predict `buyer_profile` on the test set?
+
+#### Architecture
+
+The network is symmetric: the decoder mirrors the encoder, and a small latent bottleneck sits in the middle.
+
+```
+Input:  11 categorical (entity embeddings) + 41 numeric (StandardScaler)
+        │
+        ▼
+  Embedding layer (≥11 tables, ~196 dims) ⊕ 41 numeric  →  ~237 dims
+        │
+        ▼
+  ┌────────────────────────────────┐
+  │ ENCODER                            │
+  │ FC 128 + BN + ReLU + Dropout(0.1) │
+  │ FC  64 + BN + ReLU + Dropout(0.1) │
+  │ FC   8  ← LATENT BOTTLENECK        │
+  └─────────────────────────────────┘
+        │
+        ▼           z = latent vector (8 dims)
+  ┌────────────────────────────────┐
+  │ DECODER                            │
+  │ FC  64 + BN + ReLU + Dropout(0.1) │
+  │ FC 128 + BN + ReLU + Dropout(0.1) │
+  └─────────────────────────────────┘
+        │
+  ────┼───────────────────────────────────
+  │   │   11 softmax heads  →  reconstruct categorical columns
+  │   └───────────────────────────────────
+  │            1 linear head      →  reconstruct 41 numeric features
+
+Loss = MSE(numeric) + mean_i CE(categorical_i)
+Total parameters: 311,100
+```
+
+#### Configuration
+- **Framework**: PyTorch
+- **Optimizer**: Adam (lr=1e-3, weight_decay=1e-5)
+- **Batch size**: 64
+- **Max epochs**: 200 | **Early-stopping patience**: 25 epochs (on validation reconstruction loss)
+- **Best epoch**: 70 (validation loss = 1.652) — training stopped at epoch 95
+- **Latent dimension**: 8
+- **Post-hoc eval**: KMeans (k=8, matches number of buyer profiles), k-NN (k=5, distance-weighted)
+
+#### Results
+
+**Clustering on the learned latent space** (k=8):
+
+| Metric | Value | Compare to raw-feature KMeans |
+|---|---|---|
+| Silhouette | 0.151 | 0.188 |
+| Calinski-Harabasz | 202.9 | 272.5 |
+| Davies-Bouldin | 1.73 | 1.89 |
+| **ARI vs buyer_profile** | **0.052** | n/a |
+| **NMI vs buyer_profile** | **0.080** | n/a |
+
+**k-NN classification in the latent space** (labels are only used at eval):
+
+| Metric | Value |
+|---|---|
+| Accuracy | 62.7% |
+| Balanced accuracy | 33.6% |
+| Macro F1 | 0.363 |
+| Weighted F1 | — |
+
+#### Analysis
+
+The loss curve shows the autoencoder successfully learns to compress-and-reconstruct the data — validation loss drops from 3.4 to 1.65 and then plateaus, with early stopping engaging at epoch 95.
+
+The label-aware evaluations confirm what KMeans already told us in the previous section: **the geometry of this dataset does not encode buyer-profile identity**.
+
+- **ARI = 0.052 and NMI = 0.080** are both close to zero, meaning the KMeans clusters on the latent space barely agree better than random chance with the true buyer profiles.
+- **Latent k-NN balanced accuracy is 33.6%** — it can latch onto the two dominant classes (`individual__commercial_services`, `individual__unknown`) but fails on minority ones.
+- Both results are *worse* than the supervised models in every category, but **that is the expected finding**, not a failure. An autoencoder that never sees labels cannot be expected to beat a model that trains directly on them.
+
+The useful conclusion is the **direction of the gap**: the 55-point drop from supervised CatBoost (91% macro F1) to the autoencoder+kNN pipeline (36% macro F1) quantifies how much of the signal in this dataset lives specifically in the label-conditional information — information that unsupervised objectives cannot recover on their own.
+
+#### Visualizations
+
+**Training & Validation Reconstruction Loss**
+![Autoencoder Loss Curve](visualizations/ml/autoencoder/loss_curve.png)
+
+The left panel shows the total reconstruction loss decreasing steadily from ~4.1 to ~1.65 over ~70 epochs, then plateauing. The right panel breaks this into its two components: the numeric **MSE** converges quickly to ~0.25, while the **categorical cross-entropy** does most of the work of the total loss (~1.4 plateau) 
+
+**Latent Space (PCA) colored by buyer_profile**
+![Latent PCA by profile](visualizations/ml/autoencoder/latent_pca_by_profile.png)
+
+Projecting the 8-D latent space to 2-D via PCA shows that the first two components explain most of the variance, but the buyer-profile classes are **heavily overlapping** in this view. 
+
+**Latent Space (t-SNE) colored by buyer_profile**
+![Latent t-SNE by profile](visualizations/ml/autoencoder/latent_tsne_by_profile.png)
+
+t-SNE (a non-linear projection) gives the autoencoder the fairest possible chance to show class structure. 
+
+**Latent Space (PCA) colored by KMeans cluster**
+![Latent PCA by cluster](visualizations/ml/autoencoder/latent_pca_by_cluster.png)
+
+Coloring the same PCA projection by KMeans cluster (k=8) confirms that KMeans does find geometrically coherent regions in the latent space — the colors are spatially contiguous. The problem is not that the clustering is broken; the problem is that these geometric regions don't match the semantic buyer-profile boundaries.
+
+**Cluster × Buyer-Profile Heatmap**
+![Cluster profile heatmap](visualizations/ml/autoencoder/cluster_profile_heatmap.png)
