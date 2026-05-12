@@ -1,0 +1,12 @@
+{
+  "best_trial_cv_f1": 0.9417774723753712,
+  "params": {
+    "learning_rate": 0.09245685713552655,
+    "depth": 8,
+    "l2_leaf_reg": 1.8718339860184854,
+    "random_strength": 9.93866753685354,
+    "bagging_temperature": 0.5585247307792902,
+    "border_count": 179,
+    "auto_class_weights": "None"
+  }
+}
