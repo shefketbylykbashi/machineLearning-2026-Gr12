@@ -1895,3 +1895,118 @@ python -m src.ml.generate_comparison_viz
 ```
 
 All outputs are saved to `visualizations/ml/{algorithm_name}/`.
+
+
+
+---
+
+# Phase 3 : Analysis and evaluation (re-training) and application of ML tools
+
+## Overview
+
+Phase 2 trained four supervised algorithms with **full 52-feature dataset**. Phase 3 has two narrow goals:
+
+1. **Prune low-value features** — remove noise columns that add variance without improving predictive power.
+2. **Search hyperparameters systematically** — use Optuna (TPE sampler) or grid search to squeeze additional performance out of each model.
+
+Every change is evaluated with the same **5-fold stratified CV** and the same **526-row held-out test set** from Phase 1, so improvements are directly comparable to the Phase 2 numbers.
+
+### Methodology
+
+```
+            ┌────────────────────────────────────────────┐
+            │  Phase 2 baseline (full 52 features,        │
+            │  hand-picked hyperparameters)               │
+            └─────────────────┬─────────────────────────┘
+                              │  CatBoost feature importance
+                              │  + correlation analysis
+                              ▼
+            ┌────────────────────────────────────────────┐
+            │  Step A — Feature pruning                   │
+            │   • Drop zero-importance columns            │
+            │   • Drop redundant *_was_missing flags      │
+            │   • Drop collinear binary indicators        │
+            │   • Drop near-zero *_is_outlier_iqr flags   │
+            │   52 → 33 features (19 removed)             │
+            └─────────────────┬─────────────────────────┘
+                              │  pruned feature set
+                              ▼
+            ┌────────────────────────────────────────────┐
+            │  Step B — Hyperparameter search              │
+            │   • CatBoost, RF → Optuna TPE, 40 trials    │
+            │   • Logistic Regression → grid search        │
+            │   • Neural Net → Optuna TPE, 20 trials       │
+            │   • Objective = mean 5-fold CV macro F1      │
+            └─────────────────┬─────────────────────────┘
+                              │  best config per model
+                              ▼
+            ┌────────────────────────────────────────────┐
+            │  Step C — Refit on full training set,        │
+            │  evaluate once on the held-out test set      │
+            └────────────────────────────────────────────┘
+```
+
+All Phase 3 artefacts are stored under `data/models/property_buyer/phase3/<model>/`.
+
+---
+
+## Feature Pruning (shared across all models)
+
+Using the CatBoost feature importance from Phase 2, we identified **19 features** that contribute zero or near-zero predictive value:
+
+| Category | Features removed | Count |
+|---|---|---|
+| Zero importance (CatBoost never split on them) | `zona_kadastrale`, `raw_has_land_area`, `raw_has_object_area` | 3 |
+| Missingness flags (near-constant after imputation) | `arbk_kapitali_was_missing`, `arbk_dataregjistrimit_was_missing`, `cmimi_i_shitjes_se_asetit_was_missing`, `siperfaqja_e_objektit_..._was_missing`, `siperfaqja_e_tokes_..._was_missing`, `data_e_kontrates_was_missing` | 6 |
+| Redundant binary indicators (collinear with `asset_structure_type`) | `has_object`, `is_large_land`, `is_high_value_asset` | 3 |
+| Near-zero outlier flags | `siperfaqja_e_objektit_..._is_outlier_iqr`, `siperfaqja_e_tokes_..._is_outlier_iqr`, `total_area_m2_is_outlier_iqr`, `price_per_land_m2_is_outlier_iqr`, `arbk_aktiviteti_2_kodinace_is_outlier_iqr` | 5 |
+| Collinear engineered features | `area_price_interaction`, `area_data_completeness_score` | 2 |
+
+**Result: 52 → 33 features** for all four models.
+
+---
+
+## 1. CatBoost
+
+### Hyperparameter search
+
+Optuna TPE sampler, 40 trials, 5-fold stratified CV, macro F1 objective:
+
+```python
+learning_rate       ∈ [0.01, 0.10]      log-uniform
+depth               ∈ [4, 10]
+l2_leaf_reg         ∈ [1, 15]           log-uniform
+random_strength     ∈ [0.0, 10.0]
+bagging_temperature ∈ [0.0, 1.0]
+border_count        ∈ [32, 254]
+auto_class_weights  ∈ {"None", "Balanced", "SqrtBalanced"}
+```
+
+Search progress (selected trials):
+
+```
+Trial  0 (baseline)  — CV macro F1 = 0.9237
+Trial  4             — CV macro F1 = 0.9319   depth=8, lr=0.033, Balanced
+Trial 11             — CV macro F1 = 0.9395   lr=0.088, depth=8, None
+Trial 12             — CV macro F1 = 0.9418   *** best ***
+Trial 17             — CV macro F1 = 0.9398   lr=0.071, depth=7
+Trial 32             — CV macro F1 = 0.9389   (no further improvement)
+```
+
+**Best parameters**: `learning_rate=0.0925`, `depth=8`, `l2_leaf_reg=1.87`, `random_strength=9.94`, `bagging_temperature=0.56`, `border_count=179`, `auto_class_weights="None"`
+
+![CatBoost HP search](visualizations/ml/phase3/catboost_hp_search.png)
+
+### Result
+
+| Metric | Phase 2 | Phase 3 | Δ |
+|---|---|---|---|
+| Accuracy | 95.63% | **96.01%** | +0.38 pp |
+| Balanced Accuracy | 92.37% | **92.48%** | +0.11 pp |
+| Macro F1 | 91.12% | **92.94%** | +1.82 pp |
+| Weighted F1 | 95.84% | **96.07%** | +0.23 pp |
+| Features used | 52 | 33 | −36% |
+
+CatBoost was already near the ceiling in Phase 2, so gains are modest. The +1.82 pp macro F1 improvement comes primarily from the higher learning rate (0.0925 vs. Phase 2's default) and deeper trees (depth=8) that better separate minority classes. Interestingly, `auto_class_weights="None"` beat `"Balanced"` — the model handles class imbalance internally through its gradient boosting.
+
+---
