@@ -307,3 +307,195 @@ def run_catboost(train_df, test_df, n_trials=40):
     imp_df.to_csv(out / "feature_importance.csv", index=False)
 
     return test_metrics
+
+
+# ================================================================
+# 2. Random Forest Phase 3
+# ================================================================
+
+def run_random_forest(train_df, test_df, n_trials=40):
+    logger.info("=" * 60)
+    logger.info("RANDOM FOREST — Phase 3 feature pruning + HP search (%d trials)", n_trials)
+    out = PHASE3_DIR / "random_forest"; out.mkdir(parents=True, exist_ok=True)
+
+    features = PRUNED_FEATURES
+    cat_cols = detect_cat_cols(train_df, features)
+    X_train_raw, y_train, used_feats = prep_xy(train_df, features, cat_cols)
+    X_test_raw, y_test, _ = prep_xy(test_df, features, cat_cols)
+    num_cols = [c for c in used_feats if c not in cat_cols]
+
+    logger.info("Features used: %d", len(used_feats))
+
+    def build_pipe(n_est, max_d, mss, msl, mf, cw):
+        cat_tf = Pipeline([
+            ("imp", SimpleImputer(strategy="constant", fill_value="__missing__")),
+            ("ohe", OneHotEncoder(handle_unknown="ignore", min_frequency=5)),
+        ])
+        num_tf = Pipeline([("imp", SimpleImputer(strategy="median"))])
+        pre = ColumnTransformer([
+            ("cat", cat_tf, cat_cols),
+            ("num", num_tf, num_cols),
+        ], remainder="drop")
+        clf = RandomForestClassifier(
+            n_estimators=n_est, max_depth=max_d,
+            min_samples_split=mss, min_samples_leaf=msl,
+            max_features=mf, class_weight=cw,
+            random_state=RANDOM_STATE, n_jobs=-1,
+        )
+        return Pipeline([("pre", pre), ("clf", clf)])
+
+    # Baseline
+    def make_baseline():
+        return build_pipe(1200, 24, 6, 1, 0.35, "balanced_subsample")
+
+    baseline_f1 = cv_macro_f1(make_baseline, X_train_raw, y_train, cat_cols)
+    logger.info("RF baseline (pruned, Phase 2 params) CV macro F1: %.4f", baseline_f1)
+    search_log = [{"trial": 0, "params": "baseline", "cv_macro_f1": baseline_f1}]
+
+    def objective(trial):
+        n_est = trial.suggest_int("n_estimators", 400, 2000, step=200)
+        max_d = trial.suggest_int("max_depth", 8, 32)
+        mss = trial.suggest_int("min_samples_split", 2, 20)
+        msl = trial.suggest_int("min_samples_leaf", 1, 8)
+        mf = trial.suggest_categorical("max_features", ["sqrt", "log2", 0.3, 0.4, 0.5])
+        cw = trial.suggest_categorical("class_weight", ["balanced", "balanced_subsample"])
+
+        def make_model():
+            return build_pipe(n_est, max_d, mss, msl, mf, cw)
+
+        score = cv_macro_f1(make_model, X_train_raw, y_train, cat_cols)
+        search_log.append({"trial": trial.number + 1, "params": trial.params, "cv_macro_f1": score})
+        return score
+
+    study = optuna.create_study(direction="maximize",
+                                 sampler=optuna.samplers.TPESampler(seed=RANDOM_STATE))
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+    best = study.best_params
+    best_f1 = study.best_value
+    logger.info("RF best trial CV macro F1: %.4f  params: %s", best_f1, best)
+
+    # Refit
+    final_pipe = build_pipe(
+        best["n_estimators"], best["max_depth"], best["min_samples_split"],
+        best["min_samples_leaf"], best["max_features"], best["class_weight"],
+    )
+
+    Xtr, Xval, ytr, yval = train_test_split(X_train_raw, y_train, test_size=0.15,
+                                              random_state=RANDOM_STATE, stratify=y_train)
+    final_pipe.fit(Xtr, ytr)
+    val_preds = final_pipe.predict(Xval)
+    test_preds = final_pipe.predict(X_test_raw)
+
+    val_metrics = evaluate(yval, val_preds)
+    test_metrics = evaluate(y_test, test_preds)
+
+    logger.info("RF Phase 3 TEST — acc=%.4f  bacc=%.4f  f1m=%.4f  f1w=%.4f",
+                test_metrics["accuracy"], test_metrics["balanced_accuracy"],
+                test_metrics["macro_f1"], test_metrics["weighted_f1"])
+
+    save_json(out / "metrics.json", {"validation": val_metrics, "test": test_metrics})
+    save_json(out / "best_params.json", {"best_trial_cv_f1": best_f1, "params": best})
+    save_json(out / "search_log.json", search_log)
+    save_json(out / "feature_list.json", {"features_used": used_feats, "features_removed": sorted(DROP_FEATURES & set(ALL_FEATURES)), "n_used": len(used_feats), "n_removed": len(DROP_FEATURES & set(ALL_FEATURES))})
+
+    # Refit on ALL train for final test
+    final_pipe.fit(X_train_raw, y_train)
+    test_preds_full = final_pipe.predict(X_test_raw)
+    test_metrics_full = evaluate(y_test, test_preds_full)
+    save_json(out / "metrics_full_refit.json", {"test": test_metrics_full})
+
+    logger.info("RF Phase 3 full-refit TEST — acc=%.4f  bacc=%.4f  f1m=%.4f  f1w=%.4f",
+                test_metrics_full["accuracy"], test_metrics_full["balanced_accuracy"],
+                test_metrics_full["macro_f1"], test_metrics_full["weighted_f1"])
+
+    return test_metrics_full
+
+
+# ================================================================
+# 3. Logistic Regression Phase 3
+# ================================================================
+
+def run_logistic_regression(train_df, test_df):
+    logger.info("=" * 60)
+    logger.info("LOGISTIC REGRESSION — Phase 3 feature pruning + grid search")
+    out = PHASE3_DIR / "logistic_regression"; out.mkdir(parents=True, exist_ok=True)
+
+    features = PRUNED_FEATURES
+    cat_cols = detect_cat_cols(train_df, features)
+    X_train_raw, y_train, used_feats = prep_xy(train_df, features, cat_cols)
+    X_test_raw, y_test, _ = prep_xy(test_df, features, cat_cols)
+    num_cols = [c for c in used_feats if c not in cat_cols]
+
+    logger.info("Features used: %d", len(used_feats))
+
+    def build_pipe(C, penalty, solver, class_weight):
+        cat_tf = Pipeline([
+            ("imp", SimpleImputer(strategy="constant", fill_value="__missing__")),
+            ("ohe", OneHotEncoder(handle_unknown="ignore", min_frequency=5)),
+        ])
+        num_tf = Pipeline([
+            ("imp", SimpleImputer(strategy="median")),
+            ("scl", StandardScaler()),
+        ])
+        pre = ColumnTransformer([
+            ("cat", cat_tf, cat_cols),
+            ("num", num_tf, num_cols),
+        ], remainder="drop")
+        clf = LogisticRegression(
+            C=C, penalty=penalty, solver=solver,
+            class_weight=class_weight, max_iter=8000,
+            random_state=RANDOM_STATE, n_jobs=-1,
+        )
+        return Pipeline([("pre", pre), ("clf", clf)])
+
+    # Grid search
+    grid = [
+        {"C": 1.0,  "penalty": "l2", "solver": "lbfgs", "class_weight": None},
+        {"C": 1.0,  "penalty": "l2", "solver": "lbfgs", "class_weight": "balanced"},
+        {"C": 0.3,  "penalty": "l2", "solver": "lbfgs", "class_weight": "balanced"},
+        {"C": 0.1,  "penalty": "l2", "solver": "lbfgs", "class_weight": "balanced"},
+        {"C": 3.0,  "penalty": "l2", "solver": "lbfgs", "class_weight": "balanced"},
+        {"C": 10.0, "penalty": "l2", "solver": "lbfgs", "class_weight": "balanced"},
+        {"C": 0.3,  "penalty": "l1", "solver": "saga",  "class_weight": "balanced"},
+        {"C": 0.1,  "penalty": "l1", "solver": "saga",  "class_weight": "balanced"},
+        {"C": 0.03, "penalty": "l1", "solver": "saga",  "class_weight": "balanced"},
+        {"C": 1.0,  "penalty": "l1", "solver": "saga",  "class_weight": "balanced"},
+    ]
+
+    search_log = []
+    best_score = -1; best_params = None
+    for cfg in grid:
+        def make_model(c=cfg):
+            return build_pipe(**c)
+        score = cv_macro_f1(make_model, X_train_raw, y_train, cat_cols)
+        search_log.append({"params": {k: str(v) for k, v in cfg.items()}, "cv_macro_f1": score})
+        logger.info("  LR C=%.3f pen=%s cw=%s → CV macro F1=%.4f", cfg["C"], cfg["penalty"], cfg["class_weight"], score)
+        if score > best_score:
+            best_score = score
+            best_params = cfg
+
+    logger.info("LR best: CV macro F1=%.4f  params=%s", best_score, best_params)
+
+    # Refit on full train
+    final_pipe = build_pipe(**best_params)
+    final_pipe.fit(X_train_raw, y_train)
+    test_preds = final_pipe.predict(X_test_raw)
+    test_metrics = evaluate(y_test, test_preds)
+
+    Xtr, Xval, ytr, yval = train_test_split(X_train_raw, y_train, test_size=0.15,
+                                              random_state=RANDOM_STATE, stratify=y_train)
+    val_pipe = build_pipe(**best_params)
+    val_pipe.fit(Xtr, ytr)
+    val_preds = val_pipe.predict(Xval)
+    val_metrics = evaluate(yval, val_preds)
+
+    logger.info("LR Phase 3 TEST — acc=%.4f  bacc=%.4f  f1m=%.4f  f1w=%.4f",
+                test_metrics["accuracy"], test_metrics["balanced_accuracy"],
+                test_metrics["macro_f1"], test_metrics["weighted_f1"])
+
+    save_json(out / "metrics.json", {"validation": val_metrics, "test": test_metrics})
+    save_json(out / "best_params.json", {"best_cv_f1": best_score, "params": {k: str(v) for k, v in best_params.items()}})
+    save_json(out / "search_log.json", search_log)
+    save_json(out / "feature_list.json", {"features_used": used_feats, "features_removed": sorted(DROP_FEATURES & set(ALL_FEATURES)), "n_used": len(used_feats), "n_removed": len(DROP_FEATURES & set(ALL_FEATURES))})
+
+    return test_metrics
