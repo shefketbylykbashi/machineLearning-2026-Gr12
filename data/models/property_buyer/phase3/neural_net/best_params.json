@@ -1,0 +1,17 @@
+{
+  "best_trial_cv_f1": 0.9230168709002425,
+  "params": {
+    "n_layers": 2,
+    "dim_0": 256,
+    "dim_1": 64,
+    "dropout": 0.17394178221021084,
+    "emb_dropout": 0.29087538832936755,
+    "learning_rate": 0.0029792217348362585,
+    "weight_decay": 0.0007568292060167617,
+    "batch_size": 128,
+    "hidden_dims": [
+      256,
+      64
+    ]
+  }
+}

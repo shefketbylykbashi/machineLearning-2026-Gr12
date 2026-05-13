@@ -1,0 +1,153 @@
+{
+  "test": {
+    "accuracy": 0.8802281368821293,
+    "balanced_accuracy": 0.828374219437617,
+    "macro_f1": 0.8099489631640249,
+    "weighted_f1": 0.8844396628100722,
+    "classification_report": {
+      "individual__commercial_services": {
+        "precision": 0.959409594095941,
+        "recall": 0.9252669039145908,
+        "f1-score": 0.9420289855072463,
+        "support": 281.0
+      },
+      "individual__industrial_ops": {
+        "precision": 0.74,
+        "recall": 0.6981132075471698,
+        "f1-score": 0.7184466019417476,
+        "support": 53.0
+      },
+      "individual__primary": {
+        "precision": 0.4857142857142857,
+        "recall": 0.9444444444444444,
+        "f1-score": 0.6415094339622641,
+        "support": 18.0
+      },
+      "individual__public_social": {
+        "precision": 0.6363636363636364,
+        "recall": 0.7,
+        "f1-score": 0.6666666666666666,
+        "support": 10.0
+      },
+      "individual__unknown": {
+        "precision": 1.0,
+        "recall": 0.9523809523809523,
+        "f1-score": 0.975609756097561,
+        "support": 21.0
+      },
+      "llc__commercial_services": {
+        "precision": 0.9021739130434783,
+        "recall": 0.8829787234042553,
+        "f1-score": 0.8924731182795699,
+        "support": 94.0
+      },
+      "llc__industrial_ops": {
+        "precision": 0.8095238095238095,
+        "recall": 0.8095238095238095,
+        "f1-score": 0.8095238095238095,
+        "support": 42.0
+      },
+      "llc__primary": {
+        "precision": 1.0,
+        "recall": 0.7142857142857143,
+        "f1-score": 0.8333333333333334,
+        "support": 7.0
+      },
+      "accuracy": 0.8802281368821293,
+      "macro avg": {
+        "precision": 0.8166481548426439,
+        "recall": 0.828374219437617,
+        "f1-score": 0.8099489631640249,
+        "support": 526.0
+      },
+      "weighted avg": {
+        "precision": 0.8949143294173761,
+        "recall": 0.8802281368821293,
+        "f1-score": 0.8844396628100722,
+        "support": 526.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        260,
+        8,
+        9,
+        2,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        8,
+        37,
+        7,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        17,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        20,
+        0,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        1,
+        0,
+        0,
+        83,
+        7,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        0,
+        6,
+        34,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        5
+      ]
+    ]
+  }
+}

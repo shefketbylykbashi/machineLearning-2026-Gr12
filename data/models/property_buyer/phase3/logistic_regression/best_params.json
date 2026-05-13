@@ -1,0 +1,9 @@
+{
+  "best_cv_f1": 0.7641943915952079,
+  "params": {
+    "C": "10.0",
+    "penalty": "l2",
+    "solver": "lbfgs",
+    "class_weight": "balanced"
+  }
+}
