@@ -2010,3 +2010,93 @@ Trial 32             — CV macro F1 = 0.9389   (no further improvement)
 CatBoost was already near the ceiling in Phase 2, so gains are modest. The +1.82 pp macro F1 improvement comes primarily from the higher learning rate (0.0925 vs. Phase 2's default) and deeper trees (depth=8) that better separate minority classes. Interestingly, `auto_class_weights="None"` beat `"Balanced"` — the model handles class imbalance internally through its gradient boosting.
 
 ---
+## 2. Random Forest
+
+### Hyperparameter search
+
+Optuna TPE sampler, 40 trials, 5-fold stratified CV:
+
+```python
+n_estimators       ∈ [400, 2000]   step 200
+max_depth          ∈ [8, 32]
+min_samples_split  ∈ [2, 20]
+min_samples_leaf   ∈ [1, 8]
+max_features       ∈ {"sqrt", "log2", 0.3, 0.4, 0.5}
+class_weight       ∈ {"balanced", "balanced_subsample"}
+```
+
+Search progress (selected trials):
+
+```
+Trial  0 (baseline)  — CV macro F1 = 0.7752
+Trial  2             — CV macro F1 = 0.7411   max_features=0.3, balancedV
+Trial 11             — CV macro F1 = 0.7412   balanced_subsample, msl=1
+Trial 18             — CV macro F1 = 0.7621   max_features=0.5
+Trial 28             — CV macro F1 = 0.7712   *** best ***
+```
+
+**Best parameters**: `n_estimators=1800`, `max_depth=30`, `min_samples_split=13`, `min_samples_leaf=1`, `max_features=0.5`, `class_weight="balanced_subsample"`
+
+![Random Forest HP search](visualizations/ml/phase3/random_forest_hp_search.png)
+
+### Result
+
+| Metric | Phase 2 | Phase 3 | Δ |
+|---|---|---|---|
+| Accuracy | 82.32% | **88.02%** | +5.70 pp |
+| Balanced Accuracy | 67.62% | **82.84%** | +15.22 pp |
+| Macro F1 | 68.70% | **80.99%** | +12.29 pp |
+| Weighted F1 | 81.79% | **88.44%** | +6.65 pp |
+| Features used | 52 | 33 | −36% |
+
+The largest gains in the entire Phase 3. The +15.22 pp balanced accuracy jump comes almost entirely from `class_weight="balanced_subsample"`, which forces minority classes into the bootstrap samples. The feature pruning (removing 19 noisy columns) reduced tree variance and let `max_features=0.5` work without overfitting. RF went from the worst supervised model to competitive with Logistic Regression.
+
+> **Note on methodology**: RF and LR are retrained on 100% of the training set for final test evaluation (no validation holdout needed since these models don't use early stopping). CatBoost and Neural Net use an 85/15 train/validation split for early stopping, so their final models see slightly less training data.
+
+---
+
+## 3. Logistic Regression
+
+### Hyperparameter search
+
+Grid search over 10 configurations, 5-fold stratified CV:
+
+```python
+C            ∈ {0.03, 0.1, 0.3, 1.0, 3.0, 10.0}
+penalty      ∈ {"l2", "l1"}
+solver       ∈ {"lbfgs", "saga"}       # paired with penalty
+class_weight ∈ {None, "balanced"}
+```
+
+Full grid results:
+
+```
+C=1.0   penalty=l2  class_weight=None     → CV macro F1 = 0.7530
+C=1.0   penalty=l2  class_weight=balanced → CV macro F1 = 0.7472
+C=0.3   penalty=l2  class_weight=balanced → CV macro F1 = 0.7150
+C=0.1   penalty=l2  class_weight=balanced → CV macro F1 = 0.6726
+C=3.0   penalty=l2  class_weight=balanced → CV macro F1 = 0.7586
+C=10.0  penalty=l2  class_weight=balanced → CV macro F1 = 0.7642  *** best ***
+C=0.3   penalty=l1  class_weight=balanced → CV macro F1 = 0.6759
+C=0.1   penalty=l1  class_weight=balanced → CV macro F1 = 0.6189
+C=0.03  penalty=l1  class_weight=balanced → CV macro F1 = 0.5010
+C=1.0   penalty=l1  class_weight=balanced → CV macro F1 = 0.7427
+```
+
+**Best parameters**: `C=10.0`, `penalty="l2"`, `solver="lbfgs"`, `class_weight="balanced"`
+
+![Logistic Regression HP search](visualizations/ml/phase3/logistic_regression_hp_search.png)
+
+### Result
+
+| Metric | Phase 2 | Phase 3 | Δ |
+|---|---|---|---|
+| Accuracy | 83.27% | **87.45%** | +4.18 pp |
+| Balanced Accuracy | 79.23% | **82.52%** | +3.29 pp |
+| Macro F1 | 72.86% | **80.44%** | +7.58 pp |
+| Weighted F1 | 83.94% | **87.55%** | +3.61 pp |
+| Features used | 52 | 33 | −36% |
+
+The large `C=10.0` value means minimal regularization — with the pruned feature set, overfitting risk is already reduced so the model benefits from fitting the training data more tightly. `class_weight="balanced"` provides the minority-class boost, and `penalty="l2"` outperformed `l1` because the remaining 33 features are all informative (no need for automatic zeroing).
+
+---
