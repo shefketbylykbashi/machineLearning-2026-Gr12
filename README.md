@@ -2100,3 +2100,159 @@ C=1.0   penalty=l1  class_weight=balanced → CV macro F1 = 0.7427
 The large `C=10.0` value means minimal regularization — with the pruned feature set, overfitting risk is already reduced so the model benefits from fitting the training data more tightly. `class_weight="balanced"` provides the minority-class boost, and `penalty="l2"` outperformed `l1` because the remaining 33 features are all informative (no need for automatic zeroing).
 
 ---
+
+## 4. Neural Network
+
+### Hyperparameter search
+
+Optuna TPE sampler, 20 trials, 5-fold stratified CV (entity-embedding feedforward architecture):
+
+```python
+n_layers        ∈ [2, 4]
+hidden_dim_i    ∈ {64, 128, 256, 512}   per layer
+dropout         ∈ [0.1, 0.5]
+emb_dropout     ∈ [0.0, 0.3]
+learning_rate   ∈ [5e-4, 5e-3]          log-uniform
+weight_decay    ∈ [1e-5, 1e-3]          log-uniform
+batch_size      ∈ {32, 64, 128}
+```
+
+Search progress (selected trials):
+
+```
+Trial  0 (baseline)  — CV macro F1 = 0.8945   (Phase 2 params: [256,128,64])
+Trial  2             — CV macro F1 = 0.9131   [512,64,128], dropout=0.48
+Trial  3             — CV macro F1 = 0.9230   *** best *** [256,64]
+Trial 13             — CV macro F1 = 0.9147   [128,64,128]
+Trial 16             — CV macro F1 = 0.9143   [128,256,256]
+Trial 20             — CV macro F1 = 0.9052   (no further improvement)
+```
+
+**Best parameters**: `hidden_dims=[256, 64]`, `dropout=0.174`, `emb_dropout=0.291`, `learning_rate=0.00298`, `weight_decay=0.000757`, `batch_size=128`
+
+![Neural Net HP search](visualizations/ml/phase3/neural_net_hp_search.png)
+
+### Result
+
+| Metric | Phase 2 | Phase 3 | Δ |
+|---|---|---|---|
+| Accuracy | 88.59% | **88.97%** | +0.38 pp |
+| Balanced Accuracy | 83.00% | **82.92%** | −0.08 pp |
+| Macro F1 | 82.71% | **84.80%** | +2.09 pp |
+| Weighted F1 | 88.39% | **88.70%** | +0.31 pp |
+| Features used | 52 | 33 | −36% |
+
+The neural net showed the best improvement in CV (0.8945 → 0.9230 macro F1) but the test set gain is more modest (+2.09 pp macro F1). The best architecture is a **shallower 2-layer network** [256→64] rather than the Phase 2's [256→128→64] — with 33 features and only 2,102 training rows, the deeper architecture was slightly overfitting. Higher `emb_dropout=0.29` helps regularize the entity embeddings, and `batch_size=128` provides more stable gradient estimates.
+
+---
+
+## Cross-model Phase 3 Summary
+
+### Test-set metrics, side by side
+
+![Phase 2 vs Phase 3 metrics](visualizations/ml/phase3/phase2_vs_phase3_metrics.png)
+
+Every supervised algorithm improved on every metric (except Neural Net balanced accuracy which stayed flat at ~83%). The largest absolute gains land on **Random Forest** (+15.2 pp balanced accuracy, +12.3 pp macro F1) and **Logistic Regression** (+7.6 pp macro F1) — the two models that had the biggest headroom in Phase 2. Note that RF and LR benefit from being retrained on the full training set (no validation holdout), while CatBoost and NN reserve 15% for early stopping.
+
+### Macro F1 uplift
+
+![Macro F1 uplift](visualizations/ml/phase3/macro_f1_uplift.png)
+
+The macro F1 view is the cleanest way to read class-imbalance robustness: a +12.29 pp jump for Random Forest means the model finally stopped ignoring `llc__primary` and `individual__public_social`.
+
+### Feature count shrinkage
+
+![Feature count shrinkage](visualizations/ml/phase3/feature_count_shrinkage.png)
+
+| Model | Phase 2 features | Phase 3 features | Removed |
+|---|---|---|---|
+| CatBoost | 52 | 33 | 19 |
+| Neural Net | 52 | 33 | 19 |
+| Random Forest | 52 | 33 | 19 |
+| Logistic Regression | 52 | 33 | 19 |
+
+All four models use the same pruned 33-feature set. The 19 removed columns share the same shape: **missingness flags** (`*_was_missing`), **outlier indicators** (`*_is_outlier_iqr`), **redundant binary indicators** (`has_object`, `is_large_land`, `raw_has_*`), and a handful of collinear engineered features (`area_price_interaction`, `area_data_completeness_score`). These were useful in Phase 1 as data-quality diagnostics, but once we feed cleaned data to a tuned model they are pure noise.
+
+### Updated comparison table
+
+| Algorithm | Acc. (test) | Bal. Acc. (test) | Macro F1 (test) | Features |
+|---|---|---|---|---|
+| **CatBoost (Phase 3)** | **96.01%** | **92.48%** | **92.94%** | 33 |
+| **Neural Net (Phase 3)** | 88.97% | 82.92% | 84.80% | 33 |
+| **Random Forest (Phase 3)** | 88.02% | 82.84% | 80.99% | 33 |
+| **Logistic Regression (Phase 3)** | 87.45% | 82.52% | 80.44% | 33 |
+| CatBoost (Phase 2) | 95.63% | 92.37% | 91.12% | 52 |
+| Neural Net (Phase 2) | 88.59% | 83.00% | 82.71% | 52 |
+| Logistic Regression (Phase 2) | 83.27% | 79.23% | 72.86% | 52 |
+| Random Forest (Phase 2) | 82.32% | 67.62% | 68.70% | 52 |
+
+---
+
+## Discussion
+
+### What actually moved the needle?
+
+Looking across the four supervised models, three changes recur in every "best" configuration:
+
+1. **Feature pruning** — removing 19 noise columns (missingness flags, outlier indicators, collinear binary features) reduced variance across all models. For Random Forest and Logistic Regression, this was the single biggest contributor to improvement. These features were useful in Phase 1 for data-quality diagnostics, but the tuned models already learn the same signal implicitly from the underlying numeric columns.
+
+2. **Class-weight handling** — `class_weight="balanced_subsample"` for RF and `class_weight="balanced"` for LR dramatically improved minority-class recall. The Phase 2 class imbalance (largest class ~30× the smallest) was the single biggest source of weakness for these two models. CatBoost and the Neural Net already handled imbalance well in Phase 2 (via gradient boosting's natural handling and class-weighted cross-entropy respectively), so their gains were smaller.
+
+3. **Model-specific tuning** — CatBoost benefited from a higher learning rate (0.0925 vs default), the Neural Net from a shallower architecture [256,64] with stronger embedding dropout, and Logistic Regression from minimal regularization (C=10.0) which lets it fit more tightly on the already-pruned feature set.
+
+
+### Where is the remaining error coming from?
+
+For the production model (CatBoost Phase 3):
+
+- `individual__public_social` (10 test samples, F1=0.73): with this little support, even one misclassification swings F1 by 10+ points. The fix is more data, not more tuning.
+- `llc__primary` (7 test samples, CatBoost F1=0.85): tiny class where any single error has outsized impact on metrics.
+
+### Practical recommendation
+
+- **Production model — use this one**: CatBoost with the 33-feature pruned set and Phase 3 hyperparameters (`depth=8`, `learning_rate=0.0925`, `l2_leaf_reg=1.87`, `random_strength=9.94`, `bagging_temperature=0.56`, `border_count=179`). At 92.94% macro F1 and 96.01% accuracy it is the clear winner across all phases and should be the model deployed in any production or decision-support system.
+- **Interpretable companion**: Logistic Regression with `C=10.0`, `penalty="l2"`, `class_weight="balanced"` and the 33-feature pruned set — coefficients can be inspected to explain which features push predictions toward each class.
+- **Fallback / future-proofing**: keep the Phase 3 neural net configuration ([256,64], `lr=0.003`, `batch_size=128`) on hand; if the dataset grows past 10K rows the entity-embedding approach is well-positioned to overtake CatBoost.
+
+#### Who does this help?
+
+Real-estate agencies, property platforms, and municipal planning offices in Kosovo that need to understand **who** is buying **what**. By automatically classifying buyer profiles (individual vs. LLC, primary vs. social use, etc.) the model removes manual guesswork and enables data-driven decisions at scale.
+
+#### How does this help?
+
+- **Targeted marketing** — agencies can tailor listings, pricing, and outreach to the predicted buyer segment instead of broadcasting to everyone.
+- **Risk & compliance** — flagging unusual buyer-profile predictions (e.g., an LLC classified as social-use) can surface transactions worth a second look.
+- **Market intelligence** — aggregating predictions across regions reveals which buyer segments are growing or shrinking, informing inventory and development strategy.
+- **Operational efficiency** — automating classification that previously required manual review saves staff time and reduces human error.
+
+#### What can be done with this in the future?
+
+- **Expand the dataset** — as more transactions are recorded the neural net (and potentially a transformer-based model) will benefit most; re-run the Phase 3 pipeline periodically to check if the model ranking shifts.
+- **Deploy as an API** — wrap the CatBoost model behind a REST endpoint so external platforms can request buyer-profile predictions in real time.
+- **Feedback loop** — connect predictions to downstream outcomes (did the buyer actually complete the purchase?) to create a self-improving system that retrains on corrected labels.
+- **Geographic expansion** — the same pipeline and feature engineering can be applied to property markets outside Kosovo with minimal adaptation.
+
+### Was Phase 3 worth it?
+
+| Question | Answer |
+|---|---|
+| Did macro F1 improve for every supervised model? | Yes (+1.8 to +12.3 pp) |
+| Did we shrink the feature set? | Yes (52 → 33 features, −36%) |
+| Did the model ranking change? | No — CatBoost still wins, NN still second |
+| Which model gained the most? | Random Forest (+12.3 pp macro F1, +15.2 pp balanced accuracy) |
+
+The ranking is unchanged from Phase 2; what changed is the **gap between models compressed**. CatBoost remains the clear winner at 92.94% macro F1, but the other three models now cluster between 80-85% macro F1 (up from 69-83% in Phase 2).
+
+---
+
+## How to Run Phase 3
+
+```bash
+# Run the full Phase 3 pipeline (feature pruning + HP search for all models)
+python src/ml/run_phase3.py
+
+# Generate Phase 3 comparison visualizations
+python src/ml/generate_phase3_viz.py
+```
+
+All Phase 3 artefacts land under `data/models/property_buyer/phase3/<model>/` and visualizations under `visualizations/ml/phase3/`.
